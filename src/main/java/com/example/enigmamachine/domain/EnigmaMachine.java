@@ -45,6 +45,19 @@ public final class EnigmaMachine {
         return Alphabet.toLetter(plugboard.swap(signal));
     }
 
+    /**
+     * Encrypts the letters of a message. Other characters are dropped and do not step the rotors.
+     */
+    public String encryptText(String text) {
+        StringBuilder output = new StringBuilder(text.length());
+        for (char character : text.toCharArray()) {
+            if (Alphabet.isValid(character)) {
+                output.append(encrypt(character));
+            }
+        }
+        return output.toString();
+    }
+
     private Rotor createRotor(int slot) {
         return new Rotor(
                 configuration.rotors().get(slot),
