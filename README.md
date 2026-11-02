@@ -1,36 +1,36 @@
 # Enigma Machine
 
-Simulator desktop pentru mașina Enigma M3, corect din punct de vedere istoric, ușor de testat și de folosit.
+A desktop simulator of the Enigma M3 machine, designed to be historically accurate and easy to test and use.
 
-> Proiectul este în dezvoltare. Momentan există doar structura aplicației, iar criptarea urmează să fie implementată.
+> This project is under development. The encryption engine is being built and the application does not encrypt messages yet.
 
-## Cerințe
+## Requirements
 
 - JDK 25
-- Maven nu trebuie instalat separat, proiectul include Maven Wrapper.
+- Maven does not need to be installed separately because the project includes the Maven Wrapper.
 
-## Comenzi
+## Commands
 
-Pe Windows:
+On Windows:
 
 ```powershell
-.\mvnw.cmd clean javafx:run   # pornește aplicația
-.\mvnw.cmd test               # rulează testele
-.\mvnw.cmd clean verify       # build complet și teste
+.\mvnw.cmd clean javafx:run   # start the application
+.\mvnw.cmd test               # run the tests
+.\mvnw.cmd clean verify       # run the full build and tests
 ```
 
-Pe Linux și macOS, folosește `./mvnw` în loc de `.\mvnw.cmd`.
+On Linux and macOS, use `./mvnw` instead of `.\mvnw.cmd`.
 
-## Arhitectură
+## Architecture
 
-Proiectul separă trei zone de responsabilitate:
+The project separates three areas of responsibility:
 
-| Zonă | Rol | Reguli |
+| Area | Role | Rules |
 |---|---|---|
-| Engine | Rotoare, reflector, plugboard, stepping și traseul semnalului | Nu depinde de JavaFX și poate fi testat independent |
-| UI | Ferestre, tastatură, lampboard, setări și animații | Apelează engine-ul, fără să conțină logică de criptare |
-| Persistence | Salvarea și încărcarea configurațiilor în JSON | Nu depinde de UI |
+| Engine | Rotors, reflector, plugboard, stepping and signal path | Does not depend on JavaFX and can be tested independently |
+| UI | Windows, keyboard, lampboard, settings and animations | Calls the engine and contains no encryption logic |
+| Persistence | Saving and loading configurations as JSON | Does not depend on the UI |
 
-## Tehnologii
+## Technologies
 
 Java 25, JavaFX 25, Maven, JUnit 5
