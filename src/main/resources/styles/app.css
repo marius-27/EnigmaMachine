@@ -1,0 +1,54 @@
+.root {
+    -enigma-background: #15171a;
+    -enigma-panel: #202328;
+    -enigma-border: #3a3e45;
+    -enigma-text: #ece7da;
+    -enigma-gold: #d4af37;
+    -enigma-gold-bright: #f0cf63;
+
+    -fx-base: -enigma-panel;
+    -fx-background: -enigma-background;
+    -fx-control-inner-background: -enigma-panel;
+    -fx-accent: -enigma-gold;
+    -fx-focus-color: -enigma-gold-bright;
+    -fx-faint-focus-color: transparent;
+    -fx-text-base-color: -enigma-text;
+    -fx-background-color: -enigma-background;
+    -fx-font-size: 14px;
+}
+
+.titled-pane > .title {
+    -fx-background-color: -enigma-background, -enigma-panel;
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-border-color: transparent transparent -enigma-gold transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.titled-pane > .title > .text-container > .text {
+    -fx-fill: -enigma-gold-bright;
+    -fx-font-weight: bold;
+}
+
+.titled-pane > .content {
+    -fx-background-color: -enigma-panel;
+    -fx-border-color: -enigma-border;
+    -fx-border-width: 0 1 1 1;
+}
+
+.button:hover {
+    -fx-border-color: -enigma-gold;
+}
+
+.button:focused {
+    -fx-border-color: -enigma-gold-bright;
+    -fx-border-width: 2;
+}
+
+.button:pressed {
+    -fx-background-color: -enigma-gold;
+    -fx-text-fill: -enigma-background;
+}
+
+.button:disabled {
+    -fx-opacity: 0.45;
+}
