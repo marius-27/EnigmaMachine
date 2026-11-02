@@ -6,12 +6,20 @@ public final class Rotor {
 
     private final RotorDefinition definition;
     private final int ringSetting;
-    private final int position;
+    private int position;
 
     public Rotor(RotorDefinition definition, int ringSetting, int position) {
         this.definition = Objects.requireNonNull(definition, "Rotor definition is required.");
         this.ringSetting = Alphabet.requireIndex(ringSetting);
         this.position = Alphabet.requireIndex(position);
+    }
+
+    public int position() {
+        return position;
+    }
+
+    public void step() {
+        position = (position + 1) % Alphabet.SIZE;
     }
 
     public int forward(int input) {

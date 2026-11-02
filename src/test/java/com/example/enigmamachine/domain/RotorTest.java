@@ -54,6 +54,25 @@ class RotorTest {
     }
 
     @Test
+    void stepAdvancesPositionAndChangesSignal() {
+        Rotor rotor = new Rotor(RotorDefinition.I, 0, 0);
+
+        rotor.step();
+
+        assertEquals(1, rotor.position());
+        assertEquals(Alphabet.toIndex('J'), rotor.forward(Alphabet.toIndex('A')));
+    }
+
+    @Test
+    void stepWrapsFromZToA() {
+        Rotor rotor = new Rotor(RotorDefinition.I, 0, 25);
+
+        rotor.step();
+
+        assertEquals(0, rotor.position());
+    }
+
+    @Test
     void rejectsInvalidConfiguration() {
         assertThrows(NullPointerException.class, () -> new Rotor(null, 0, 0));
         assertThrows(IllegalArgumentException.class, () -> new Rotor(RotorDefinition.I, 26, 0));
