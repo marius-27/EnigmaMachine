@@ -4,18 +4,26 @@ import java.util.Objects;
 
 public final class EnigmaMachine {
 
-    private final Rotor left;
-    private final Rotor middle;
-    private final Rotor right;
-    private final Reflector reflector;
-    private final Plugboard plugboard;
+    private static final int LEFT = 0;
+    private static final int MIDDLE = 1;
+    private static final int RIGHT = 2;
 
-    public EnigmaMachine(Rotor left, Rotor middle, Rotor right, Reflector reflector, Plugboard plugboard) {
-        this.left = Objects.requireNonNull(left, "Left rotor is required.");
-        this.middle = Objects.requireNonNull(middle, "Middle rotor is required.");
-        this.right = Objects.requireNonNull(right, "Right rotor is required.");
-        this.reflector = Objects.requireNonNull(reflector, "Reflector is required.");
-        this.plugboard = Objects.requireNonNull(plugboard, "Plugboard is required.");
+    private final MachineConfiguration configuration;
+    private final Plugboard plugboard;
+    private Rotor left;
+    private Rotor middle;
+    private Rotor right;
+
+    public EnigmaMachine(MachineConfiguration configuration) {
+        this.configuration = Objects.requireNonNull(configuration, "Machine configuration is required.");
+        this.plugboard = new Plugboard(configuration.plugboardPairs());
+        reset();
+    }
+
+    public void reset() {
+        left = createRotor(LEFT);
+        middle = createRotor(MIDDLE);
+        right = createRotor(RIGHT);
     }
 
     public char encrypt(char letter) {
@@ -23,10 +31,17 @@ public final class EnigmaMachine {
         signal = right.forward(signal);
         signal = middle.forward(signal);
         signal = left.forward(signal);
-        signal = reflector.reflect(signal);
+        signal = configuration.reflector().reflect(signal);
         signal = left.reverse(signal);
         signal = middle.reverse(signal);
         signal = right.reverse(signal);
         return Alphabet.toLetter(plugboard.swap(signal));
+    }
+
+    private Rotor createRotor(int slot) {
+        return new Rotor(
+                configuration.rotors().get(slot),
+                configuration.ringSettings().get(slot),
+                configuration.positions().get(slot));
     }
 }

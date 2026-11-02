@@ -37,23 +37,25 @@ class EnigmaMachineTest {
     }
 
     @Test
-    void requiresEveryComponent() {
-        Rotor rotor = new Rotor(RotorDefinition.I, 0, 0);
-        Plugboard plugboard = new Plugboard(List.of());
+    void requiresConfiguration() {
+        assertThrows(NullPointerException.class, () -> new EnigmaMachine(null));
+    }
 
-        assertThrows(NullPointerException.class, () -> new EnigmaMachine(null, rotor, rotor, Reflector.B, plugboard));
-        assertThrows(NullPointerException.class, () -> new EnigmaMachine(rotor, null, rotor, Reflector.B, plugboard));
-        assertThrows(NullPointerException.class, () -> new EnigmaMachine(rotor, rotor, null, Reflector.B, plugboard));
-        assertThrows(NullPointerException.class, () -> new EnigmaMachine(rotor, rotor, rotor, null, plugboard));
-        assertThrows(NullPointerException.class, () -> new EnigmaMachine(rotor, rotor, rotor, Reflector.B, null));
+    @Test
+    void resetKeepsConfiguredOutput() {
+        EnigmaMachine machine = machineWithRightRotorAt('B');
+
+        machine.reset();
+
+        assertEquals('B', machine.encrypt('A'));
     }
 
     private static EnigmaMachine machineWithRightRotorAt(char position) {
-        return new EnigmaMachine(
-                new Rotor(RotorDefinition.I, 0, 0),
-                new Rotor(RotorDefinition.II, 0, 0),
-                new Rotor(RotorDefinition.III, 0, Alphabet.toIndex(position)),
+        return new EnigmaMachine(new MachineConfiguration(
+                List.of(RotorDefinition.I, RotorDefinition.II, RotorDefinition.III),
                 Reflector.B,
-                new Plugboard(List.of()));
+                List.of(0, 0, 0),
+                List.of(0, 0, Alphabet.toIndex(position)),
+                List.of()));
     }
 }
