@@ -9,32 +9,49 @@ import org.junit.jupiter.api.Test;
 
 class EnigmaMachineTest {
 
+    private static final int A = 0;
+    private static final int Z = 25;
+
     @Test
     void followsFullSignalPath() {
-        assertEquals('U', machineWithRightRotorAt('A').encrypt('A'));
+        // The right rotor steps from Z to A before the signal, so the signal crosses position AAA.
+        assertEquals('U', machineStartingAt(Z, List.of()).encrypt('A'));
     }
 
     @Test
-    void matchesKnownOutputForEachRightRotorPosition() {
+    void matchesKnownOutputFromStartAAA() {
         // Rotors I-II-III, reflector B, rings AAA: AAAAA encrypts to BDZGO from start AAA.
-        // Stepping is not implemented yet, so each position is set explicitly.
-        assertEquals('B', machineWithRightRotorAt('B').encrypt('A'));
-        assertEquals('D', machineWithRightRotorAt('C').encrypt('A'));
-        assertEquals('Z', machineWithRightRotorAt('D').encrypt('A'));
-        assertEquals('G', machineWithRightRotorAt('E').encrypt('A'));
-        assertEquals('O', machineWithRightRotorAt('F').encrypt('A'));
+        EnigmaMachine machine = machineStartingAt(A, List.of());
+
+        assertEquals('B', machine.encrypt('A'));
+        assertEquals('D', machine.encrypt('A'));
+        assertEquals('Z', machine.encrypt('A'));
+        assertEquals('G', machine.encrypt('A'));
+        assertEquals('O', machine.encrypt('A'));
+    }
+
+    @Test
+    void stepsRightRotorOnceForEachLetter() {
+        EnigmaMachine machine = machineStartingAt(A, List.of());
+
+        machine.encrypt('A');
+        assertEquals(List.of(0, 0, 1), machine.positions());
+
+        machine.encrypt('A');
+        assertEquals(List.of(0, 0, 2), machine.positions());
     }
 
     @Test
     void acceptsLowerCaseLetters() {
-        assertEquals('U', machineWithRightRotorAt('A').encrypt('a'));
+        assertEquals('U', machineStartingAt(Z, List.of()).encrypt('a'));
     }
 
     @Test
-    void rejectsInvalidLetters() {
-        EnigmaMachine machine = machineWithRightRotorAt('A');
+    void rejectsInvalidLettersWithoutStepping() {
+        EnigmaMachine machine = machineStartingAt(A, List.of());
 
         assertThrows(IllegalArgumentException.class, () -> machine.encrypt('7'));
+        assertEquals(List.of(0, 0, 0), machine.positions());
     }
 
     @Test
@@ -43,19 +60,22 @@ class EnigmaMachineTest {
     }
 
     @Test
-    void resetKeepsConfiguredOutput() {
-        EnigmaMachine machine = machineWithRightRotorAt('B');
+    void resetRestoresInitialPositions() {
+        EnigmaMachine machine = machineStartingAt(A, List.of());
+        machine.encrypt('A');
+        machine.encrypt('A');
 
         machine.reset();
 
+        assertEquals(List.of(0, 0, 0), machine.positions());
         assertEquals('B', machine.encrypt('A'));
     }
 
     @Test
     void appliesPlugboardBeforeAndAfterRotors() {
         // Without plugboard, position AAA encrypts A to U.
-        assertEquals('Z', machineWithPlugboard(List.of("UZ")).encrypt('A'));
-        assertEquals('U', machineWithPlugboard(List.of("AB")).encrypt('B'));
+        assertEquals('Z', machineStartingAt(Z, List.of("UZ")).encrypt('A'));
+        assertEquals('U', machineStartingAt(Z, List.of("AB")).encrypt('B'));
     }
 
     @Test
@@ -64,7 +84,10 @@ class EnigmaMachineTest {
             EnigmaMachine machine = new EnigmaMachine(configuration);
             for (int index = 0; index < Alphabet.SIZE; index++) {
                 char letter = Alphabet.toLetter(index);
-                assertEquals(letter, machine.encrypt(machine.encrypt(letter)), configuration.toString());
+                char encrypted = machine.encrypt(letter);
+                machine.reset();
+                assertEquals(letter, machine.encrypt(encrypted), configuration.toString());
+                machine.reset();
             }
         }
     }
@@ -102,21 +125,12 @@ class EnigmaMachineTest {
                         List.of("AB", "CD", "EF", "GH", "IJ", "KL", "MN", "OP", "QR", "ST", "UV", "WX", "YZ")));
     }
 
-    private static EnigmaMachine machineWithPlugboard(List<String> pairs) {
+    private static EnigmaMachine machineStartingAt(int rightPosition, List<String> plugboardPairs) {
         return new EnigmaMachine(new MachineConfiguration(
                 List.of(RotorDefinition.I, RotorDefinition.II, RotorDefinition.III),
                 Reflector.B,
                 List.of(0, 0, 0),
-                List.of(0, 0, 0),
-                pairs));
-    }
-
-    private static EnigmaMachine machineWithRightRotorAt(char position) {
-        return new EnigmaMachine(new MachineConfiguration(
-                List.of(RotorDefinition.I, RotorDefinition.II, RotorDefinition.III),
-                Reflector.B,
-                List.of(0, 0, 0),
-                List.of(0, 0, Alphabet.toIndex(position)),
-                List.of()));
+                List.of(0, 0, rightPosition),
+                plugboardPairs));
     }
 }

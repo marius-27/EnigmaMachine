@@ -1,5 +1,6 @@
 package com.example.enigmamachine.domain;
 
+import java.util.List;
 import java.util.Objects;
 
 public final class EnigmaMachine {
@@ -26,8 +27,14 @@ public final class EnigmaMachine {
         right = createRotor(RIGHT);
     }
 
+    public List<Integer> positions() {
+        return List.of(left.position(), middle.position(), right.position());
+    }
+
     public char encrypt(char letter) {
-        int signal = plugboard.swap(Alphabet.toIndex(letter));
+        int input = Alphabet.toIndex(letter);
+        SteppingMechanism.step(left, middle, right);
+        int signal = plugboard.swap(input);
         signal = right.forward(signal);
         signal = middle.forward(signal);
         signal = left.forward(signal);

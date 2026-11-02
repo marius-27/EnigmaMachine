@@ -1,7 +1,9 @@
 package com.example.enigmamachine.domain;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -51,6 +53,36 @@ class RotorTest {
                 }
             }
         }
+    }
+
+    @Test
+    void stepAdvancesPositionAndChangesSignal() {
+        Rotor rotor = new Rotor(RotorDefinition.I, 0, 0);
+
+        rotor.step();
+
+        assertEquals(1, rotor.position());
+        assertEquals(Alphabet.toIndex('J'), rotor.forward(Alphabet.toIndex('A')));
+    }
+
+    @Test
+    void stepWrapsFromZToA() {
+        Rotor rotor = new Rotor(RotorDefinition.I, 0, 25);
+
+        rotor.step();
+
+        assertEquals(0, rotor.position());
+    }
+
+    @Test
+    void detectsNotchAtCurrentPosition() {
+        assertTrue(new Rotor(RotorDefinition.I, 0, Alphabet.toIndex('Q')).isAtNotch());
+        assertFalse(new Rotor(RotorDefinition.I, 0, Alphabet.toIndex('R')).isAtNotch());
+    }
+
+    @Test
+    void notchFollowsWindowLetterRegardlessOfRingSetting() {
+        assertTrue(new Rotor(RotorDefinition.I, 5, Alphabet.toIndex('Q')).isAtNotch());
     }
 
     @Test
