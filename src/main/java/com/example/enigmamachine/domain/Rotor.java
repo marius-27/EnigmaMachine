@@ -18,6 +18,10 @@ public final class Rotor {
         return position;
     }
 
+    public boolean isAtNotch() {
+        return definition.hasNotchAt(position);
+    }
+
     public void step() {
         position = (position + 1) % Alphabet.SIZE;
     }

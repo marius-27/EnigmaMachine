@@ -33,7 +33,7 @@ public final class EnigmaMachine {
 
     public char encrypt(char letter) {
         int input = Alphabet.toIndex(letter);
-        right.step();
+        stepRotors();
         int signal = plugboard.swap(input);
         signal = right.forward(signal);
         signal = middle.forward(signal);
@@ -43,6 +43,17 @@ public final class EnigmaMachine {
         signal = middle.reverse(signal);
         signal = right.reverse(signal);
         return Alphabet.toLetter(plugboard.swap(signal));
+    }
+
+    private void stepRotors() {
+        if (middle.isAtNotch()) {
+            // Double stepping: the middle rotor also moves itself when it pushes the left rotor.
+            left.step();
+            middle.step();
+        } else if (right.isAtNotch()) {
+            middle.step();
+        }
+        right.step();
     }
 
     private Rotor createRotor(int slot) {
