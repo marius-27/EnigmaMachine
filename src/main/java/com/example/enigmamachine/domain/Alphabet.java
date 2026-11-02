@@ -26,10 +26,14 @@ public final class Alphabet {
     }
 
     public static char toLetter(int index) {
+        return (char) ('A' + requireIndex(index));
+    }
+
+    public static int requireIndex(int index) {
         if (index < 0 || index >= SIZE) {
             throw new IllegalArgumentException("Invalid index: " + index + ". Expected 0-25.");
         }
-        return (char) ('A' + index);
+        return index;
     }
 
     private static boolean isUpperCase(char letter) {
