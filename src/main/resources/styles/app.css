@@ -35,6 +35,13 @@
     -fx-border-width: 0 1 1 1;
 }
 
+.rotor-windows {
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -enigma-gold-bright;
+}
+
 .button:hover {
     -fx-border-color: -enigma-gold;
 }
