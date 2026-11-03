@@ -93,6 +93,33 @@ class EnigmaMachineTest {
     }
 
     @Test
+    void restoredPositionsContinueTheSameSequence() {
+        EnigmaMachine machine = machineStartingAt(0, List.of());
+        machine.encrypt('A');
+        List<Integer> saved = machine.positions();
+        char next = machine.encrypt('B');
+
+        machine.restorePositions(saved);
+
+        assertEquals(saved, machine.positions());
+        assertEquals(next, machine.encrypt('B'));
+    }
+
+    @Test
+    void rejectsRestoringTheWrongNumberOfPositions() {
+        EnigmaMachine machine = machineStartingAt(0, List.of());
+
+        assertThrows(IllegalArgumentException.class, () -> machine.restorePositions(List.of(0, 0)));
+    }
+
+    @Test
+    void rejectsRestoringAPositionOutsideTheAlphabet() {
+        EnigmaMachine machine = machineStartingAt(0, List.of());
+
+        assertThrows(IllegalArgumentException.class, () -> machine.restorePositions(List.of(0, 0, 26)));
+    }
+
+    @Test
     void neverEncryptsLetterToItself() {
         for (MachineConfiguration configuration : sampleConfigurations()) {
             EnigmaMachine machine = new EnigmaMachine(configuration);

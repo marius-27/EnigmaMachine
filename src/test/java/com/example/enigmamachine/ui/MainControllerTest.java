@@ -214,6 +214,79 @@ class MainControllerTest {
         assertEquals(message, typed.viewModel().outputTextProperty().get());
     }
 
+    @Test
+    void backspaceRemovesTheLastLetterAndRestoresTheRotors() {
+        controller.pressKey('A');
+        controller.pressKey('A');
+
+        controller.deleteLastLetter();
+
+        assertEquals("A", viewModel.inputTextProperty().get());
+        assertEquals("B", viewModel.outputTextProperty().get());
+        assertEquals("B", viewModel.litLampProperty().get());
+        assertEquals("AAB", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void backspaceOfTheOnlyLetterTurnsTheLampOff() {
+        controller.pressKey('A');
+
+        controller.deleteLastLetter();
+
+        assertEquals("", viewModel.inputTextProperty().get());
+        assertEquals("", viewModel.litLampProperty().get());
+        assertEquals("AAA", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void backspaceOnAnEmptyMessageDoesNothing() {
+        controller.deleteLastLetter();
+
+        assertEquals("", viewModel.inputTextProperty().get());
+        assertEquals("AAA", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void backspaceAfterClearLeavesTheRotorsWhereTheyAre() {
+        controller.pressKey('A');
+        controller.clear();
+
+        controller.deleteLastLetter();
+
+        assertEquals("AAB", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void backspaceAfterResetDoesNothing() {
+        controller.pressKey('A');
+        controller.reset();
+
+        controller.deleteLastLetter();
+
+        assertEquals("AAA", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void backspaceUndoesADoubleStepAndRetypingGivesTheSameLetters() {
+        MainController typed = new MainController(new EnigmaService(new MachineConfiguration(
+                List.of(RotorDefinition.I, RotorDefinition.II, RotorDefinition.III),
+                Reflector.B,
+                List.of(0, 0, 0),
+                List.of(0, 3, 20),
+                List.of())));
+        "AAAA".chars().forEach(letter -> typed.pressKey((char) letter));
+        String output = typed.viewModel().outputTextProperty().get();
+
+        typed.deleteLastLetter();
+        typed.deleteLastLetter();
+        assertEquals("AEW", typed.viewModel().rotorWindowsProperty().get());
+        typed.deleteLastLetter();
+        assertEquals("ADV", typed.viewModel().rotorWindowsProperty().get());
+
+        "AAA".chars().forEach(letter -> typed.pressKey((char) letter));
+        assertEquals(output, typed.viewModel().outputTextProperty().get());
+    }
+
     private static String windowsOf(EnigmaMachine machine) {
         StringBuilder windows = new StringBuilder();
         machine.positions().forEach(position -> windows.append(Alphabet.toLetter(position)));

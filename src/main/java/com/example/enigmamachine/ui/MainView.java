@@ -24,6 +24,7 @@ public final class MainView extends BorderPane {
         rotorWindows.textProperty().bind(controller.viewModel().rotorWindowsProperty());
 
         keyboardView.setOnLetterPressed(controller::pressKey);
+        keyboardView.setOnBackspacePressed(controller::deleteLastLetter);
 
         TitledPane rotors = section("Rotors", rotorWindows);
         TitledPane lampboard = section("Lampboard", new LampboardView(controller.viewModel().litLampProperty()));

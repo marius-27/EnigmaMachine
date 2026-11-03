@@ -29,6 +29,7 @@ public final class KeyboardView extends VBox {
     private final Map<Character, Button> keys = new HashMap<>();
     private final KeyPressTracker physicalKeys = new KeyPressTracker();
     private Consumer<Character> onLetterPressed = letter -> { };
+    private Runnable onBackspacePressed = () -> { };
 
     public KeyboardView() {
         super(SPACING);
@@ -45,6 +46,10 @@ public final class KeyboardView extends VBox {
 
     public void setOnLetterPressed(Consumer<Character> handler) {
         onLetterPressed = Objects.requireNonNull(handler, "Letter handler is required.");
+    }
+
+    public void setOnBackspacePressed(Runnable handler) {
+        onBackspacePressed = Objects.requireNonNull(handler, "Backspace handler is required.");
     }
 
     /** Listens to the physical keyboard while the given stage has its scene shown. */
@@ -76,6 +81,13 @@ public final class KeyboardView extends VBox {
     }
 
     private void handlePhysicalPress(KeyEvent event) {
+        if (event.getCode() == KeyCode.BACK_SPACE) {
+            // Unlike a letter, Backspace keeps deleting while it is held down.
+            if (!event.isControlDown() && !event.isAltDown() && !event.isMetaDown()) {
+                onBackspacePressed.run();
+            }
+            return;
+        }
         letterOf(event).ifPresent(letter -> {
             if (physicalKeys.press(event.getCode(), letter)) {
                 keys.get(letter).pseudoClassStateChanged(HELD, true);

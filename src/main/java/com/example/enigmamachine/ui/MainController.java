@@ -36,8 +36,17 @@ public final class MainController {
         viewModel.showRotorWindows(service.rotorWindows());
     }
 
+    /** Removes the last letter from the messages and returns the rotors to where they were before it. */
+    public void deleteLastLetter() {
+        if (service.undoLastLetter()) {
+            viewModel.removeLastLetters();
+            viewModel.showRotorWindows(service.rotorWindows());
+        }
+    }
+
     /** Empties the message panels and turns the lamp off; the rotors stay where they are. */
     public void clear() {
+        service.forgetLetters();
         viewModel.clearMessages();
     }
 

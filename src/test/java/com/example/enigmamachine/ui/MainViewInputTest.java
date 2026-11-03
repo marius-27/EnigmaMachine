@@ -149,6 +149,43 @@ class MainViewInputTest {
     }
 
     @Test
+    void backspaceKeepsDeletingWhileHeld() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+            tap(scene, "i", KeyCode.I);
+            tap(scene, "m", KeyCode.M);
+
+            press(scene, "", KeyCode.BACK_SPACE);
+            press(scene, "", KeyCode.BACK_SPACE);
+            release(scene, KeyCode.BACK_SPACE);
+
+            assertState("H", "I", "AAB");
+        });
+    }
+
+    @Test
+    void backspaceWorksWhileAMessageAreaHasFocus() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            tap(view.lookup(".message-area"), "", KeyCode.BACK_SPACE);
+
+            assertState("", "", "AAA");
+        });
+    }
+
+    @Test
+    void backspaceWithAShortcutModifierIsIgnored() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            fire(scene, new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.BACK_SPACE, false, true, false, false));
+
+            assertState("H", "I", "AAB");
+        });
+    }
+
+    @Test
     void altGrDiacriticIsTypedAsItsBaseLetter() {
         onFxThread(() -> {
             fire(scene, new KeyEvent(KeyEvent.KEY_PRESSED, "ț", "ț", KeyCode.T, false, true, true, false));

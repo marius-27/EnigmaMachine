@@ -22,9 +22,19 @@ public final class EnigmaMachine {
     }
 
     public void reset() {
-        left = createRotor(LEFT);
-        middle = createRotor(MIDDLE);
-        right = createRotor(RIGHT);
+        restorePositions(configuration.positions());
+    }
+
+    /**
+     * Puts the rotors back to positions read earlier from {@link #positions()}.
+     */
+    public void restorePositions(List<Integer> positions) {
+        if (positions.size() != configuration.rotors().size()) {
+            throw new IllegalArgumentException("Expected 3 positions, got " + positions.size() + ".");
+        }
+        left = createRotor(LEFT, positions.get(LEFT));
+        middle = createRotor(MIDDLE, positions.get(MIDDLE));
+        right = createRotor(RIGHT, positions.get(RIGHT));
     }
 
     public List<Integer> positions() {
@@ -58,10 +68,7 @@ public final class EnigmaMachine {
         return output.toString();
     }
 
-    private Rotor createRotor(int slot) {
-        return new Rotor(
-                configuration.rotors().get(slot),
-                configuration.ringSettings().get(slot),
-                configuration.positions().get(slot));
+    private Rotor createRotor(int slot, int position) {
+        return new Rotor(configuration.rotors().get(slot), configuration.ringSettings().get(slot), position);
     }
 }
