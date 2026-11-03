@@ -67,6 +67,57 @@ class MainControllerTest {
     }
 
     @Test
+    void lampShowsTheLastOutputLetter() {
+        assertEquals("", viewModel.litLampProperty().get());
+
+        controller.pressKey('A');
+        assertEquals("B", viewModel.litLampProperty().get());
+
+        controller.pressKey('A');
+        assertEquals("D", viewModel.litLampProperty().get());
+    }
+
+    @Test
+    void invalidKeyLeavesTheLampAsItWas() {
+        controller.pressKey('A');
+
+        controller.pressKey('7');
+
+        assertEquals("B", viewModel.litLampProperty().get());
+    }
+
+    @Test
+    void clearEmptiesMessagesAndLampButKeepsPositions() {
+        controller.pressKey('A');
+
+        controller.clear();
+
+        assertEquals("", viewModel.inputTextProperty().get());
+        assertEquals("", viewModel.outputTextProperty().get());
+        assertEquals("", viewModel.litLampProperty().get());
+        assertEquals("AAB", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void encryptionContinuesFromTheSamePositionsAfterClear() {
+        controller.pressKey('A');
+
+        controller.clear();
+        controller.pressKey('A');
+
+        assertEquals("D", viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void resetTurnsTheLampOff() {
+        controller.pressKey('A');
+
+        controller.reset();
+
+        assertEquals("", viewModel.litLampProperty().get());
+    }
+
+    @Test
     void requiresService() {
         assertThrows(NullPointerException.class, () -> new MainController(null));
     }

@@ -21,7 +21,7 @@ import javafx.stage.Stage;
  */
 public final class KeyboardView extends VBox {
 
-    private static final List<String> ROWS = List.of("QWERTZUIO", "ASDFGHJK", "PYXCVBNML");
+    static final List<String> ROWS =List.of("QWERTZUIO", "ASDFGHJK", "PYXCVBNML");
     private static final double SPACING = 8;
     private static final PseudoClass HELD = PseudoClass.getPseudoClass("held");
 
@@ -49,8 +49,9 @@ public final class KeyboardView extends VBox {
     /** Listens to the physical keyboard while the given stage has its scene shown. */
     public void attachTo(Stage stage) {
         Scene scene = stage.getScene();
-        scene.addEventHandler(KeyEvent.KEY_PRESSED, this::handlePhysicalPress);
-        scene.addEventHandler(KeyEvent.KEY_RELEASED, this::handlePhysicalRelease);
+        // A filter runs before the focused control, and a focused text area would otherwise swallow the keys.
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, this::handlePhysicalPress);
+        scene.addEventFilter(KeyEvent.KEY_RELEASED, this::handlePhysicalRelease);
         // A key released in another window sends no event here and would otherwise stay held forever.
         stage.focusedProperty().addListener((observable, wasFocused, isFocused) -> {
             if (!isFocused) {

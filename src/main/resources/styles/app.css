@@ -78,6 +78,32 @@
     -fx-text-fill: -enigma-background;
 }
 
+.lamp {
+    -fx-min-width: 44px;
+    -fx-min-height: 44px;
+    -fx-max-width: 44px;
+    -fx-max-height: 44px;
+    -fx-alignment: center;
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-weight: bold;
+    -fx-text-fill: #8a8578;
+    -fx-background-color: #17191c;
+    -fx-background-radius: 22px;
+    -fx-border-radius: 22px;
+    -fx-border-color: -enigma-border;
+}
+
+.lamp:lit {
+    -fx-text-fill: -enigma-background;
+    -fx-background-color: -enigma-gold-bright;
+    -fx-border-color: -enigma-gold-bright;
+    -fx-effect: dropshadow(gaussian, -enigma-gold-bright, 16, 0.4, 0, 0);
+}
+
+.message-area {
+    -fx-font-family: "Consolas", monospace;
+}
+
 .button:disabled {
     -fx-opacity: 0.45;
 }

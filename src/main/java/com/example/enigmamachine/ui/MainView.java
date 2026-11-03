@@ -5,7 +5,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -25,9 +24,9 @@ public final class MainView extends BorderPane {
         keyboardView.setOnLetterPressed(controller::pressKey);
 
         TitledPane rotors = section("Rotors", rotorWindows);
-        TitledPane lampboard = section("Lampboard", new Pane());
+        TitledPane lampboard = section("Lampboard", new LampboardView(controller.viewModel().litLampProperty()));
         TitledPane keyboard = section("Keyboard", keyboardView);
-        TitledPane messages = section("Messages", new Pane());
+        TitledPane messages = section("Messages", new MessagesView(controller));
 
         VBox machine = new VBox(SPACING, rotors, lampboard, keyboard);
         VBox.setVgrow(lampboard, Priority.ALWAYS);
