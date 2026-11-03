@@ -11,17 +11,21 @@ import javafx.beans.property.SimpleObjectProperty;
 /**
  * The settings being edited. They stay separate from the running machine until they are applied.
  * Rotor slots are ordered left, middle, right. Choosing a rotor already in use swaps the two slots,
- * so the selection always holds three distinct rotors.
+ * so the selection always holds three distinct rotors. Positions and ring settings are indexes from 0 to 25.
  */
 public final class SettingsViewModel {
 
     private final MachineConfiguration initial;
     private final List<ObjectProperty<RotorDefinition>> rotors = new ArrayList<>();
+    private final List<ObjectProperty<Integer>> positions;
+    private final List<ObjectProperty<Integer>> ringSettings;
     private final ObjectProperty<Reflector> reflector;
 
     public SettingsViewModel(MachineConfiguration initial) {
         this.initial = initial;
         this.reflector = new SimpleObjectProperty<>(initial.reflector());
+        this.positions = propertiesOf(initial.positions());
+        this.ringSettings = propertiesOf(initial.ringSettings());
         for (RotorDefinition rotor : initial.rotors()) {
             ObjectProperty<RotorDefinition> slot = new SimpleObjectProperty<>(rotor);
             slot.addListener((observable, previous, current) -> swapDuplicate(slot, previous, current));
@@ -31,6 +35,14 @@ public final class SettingsViewModel {
 
     public ObjectProperty<RotorDefinition> rotorProperty(int slot) {
         return rotors.get(slot);
+    }
+
+    public ObjectProperty<Integer> positionProperty(int slot) {
+        return positions.get(slot);
+    }
+
+    public ObjectProperty<Integer> ringSettingProperty(int slot) {
+        return ringSettings.get(slot);
     }
 
     public int rotorSlots() {
@@ -43,10 +55,10 @@ public final class SettingsViewModel {
 
     public MachineConfiguration toConfiguration() {
         return new MachineConfiguration(
-                rotors.stream().map(ObjectProperty::get).toList(),
+                valuesOf(rotors),
                 reflector.get(),
-                initial.ringSettings(),
-                initial.positions(),
+                valuesOf(ringSettings),
+                valuesOf(positions),
                 initial.plugboardPairs());
     }
 
@@ -57,5 +69,17 @@ public final class SettingsViewModel {
                 other.set(previous);
             }
         }
+    }
+
+    private static List<ObjectProperty<Integer>> propertiesOf(List<Integer> values) {
+        List<ObjectProperty<Integer>> properties = new ArrayList<>();
+        for (Integer value : values) {
+            properties.add(new SimpleObjectProperty<>(value));
+        }
+        return properties;
+    }
+
+    private static <T> List<T> valuesOf(List<ObjectProperty<T>> properties) {
+        return properties.stream().map(ObjectProperty::get).toList();
     }
 }

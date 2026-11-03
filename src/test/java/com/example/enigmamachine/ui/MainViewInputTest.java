@@ -152,6 +152,49 @@ class MainViewInputTest {
     }
 
     @Test
+    void positionSelectorsOfferLettersAToZ() {
+        onFxThread(() -> {
+            ComboBox<Integer> selector = integerSelector(".position-selector");
+
+            assertEquals(26, selector.getItems().size());
+            assertEquals("A", selector.getConverter().toString(0));
+            assertEquals("Z", selector.getConverter().toString(25));
+        });
+    }
+
+    @Test
+    void ringSelectorsOfferNumbers01To26() {
+        onFxThread(() -> {
+            ComboBox<Integer> selector = integerSelector(".ring-selector");
+
+            assertEquals(26, selector.getItems().size());
+            assertEquals("01", selector.getConverter().toString(0));
+            assertEquals("26", selector.getConverter().toString(25));
+        });
+    }
+
+    @Test
+    void positionAndRingSelectorsEditTheirOwnSlot() {
+        onFxThread(() -> {
+            integerSelectorInRow(".position-selector", 1).setValue(7);
+            integerSelectorInRow(".ring-selector", 3).setValue(9);
+
+            MachineConfiguration edited = controller.settings().toConfiguration();
+            assertEquals(List.of(7, 0, 0), edited.positions());
+            assertEquals(List.of(0, 0, 9), edited.ringSettings());
+        });
+    }
+
+    @Test
+    void editingSettingsDoesNotChangeTheRunningMachine() {
+        onFxThread(() -> {
+            integerSelectorInRow(".position-selector", 1).setValue(7);
+
+            assertEquals("AAA", controller.viewModel().rotorWindowsProperty().get());
+        });
+    }
+
+    @Test
     void backspaceKeepsDeletingWhileHeld() {
         onFxThread(() -> {
             tap(scene, "h", KeyCode.H);
@@ -341,6 +384,20 @@ class MainViewInputTest {
         assertEquals(input, controller.viewModel().inputTextProperty().get());
         assertEquals(output, controller.viewModel().outputTextProperty().get());
         assertEquals(rotors, controller.viewModel().rotorWindowsProperty().get());
+    }
+
+    @SuppressWarnings("unchecked")
+    private ComboBox<Integer> integerSelector(String selector) {
+        return (ComboBox<Integer>) view.lookup(selector);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ComboBox<Integer> integerSelectorInRow(String selector, int row) {
+        return view.lookupAll(selector).stream()
+                .filter(node -> GridPane.getRowIndex(node) == row)
+                .map(node -> (ComboBox<Integer>) node)
+                .findFirst()
+                .orElseThrow();
     }
 
     private Button buttonLabeled(String title) {

@@ -50,7 +50,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    void otherSettingsAreKept() {
+    void changingARotorKeepsTheOtherSettings() {
         settings.rotorProperty(2).set(RotorDefinition.IV);
         settings.reflectorProperty().set(Reflector.C);
 
@@ -59,5 +59,30 @@ class SettingsViewModelTest {
         assertEquals(INITIAL.ringSettings(), edited.ringSettings());
         assertEquals(INITIAL.positions(), edited.positions());
         assertEquals(INITIAL.plugboardPairs(), edited.plugboardPairs());
+    }
+
+    @Test
+    void startPositionsAreEditedPerSlot() {
+        settings.positionProperty(0).set(25);
+        settings.positionProperty(2).set(0);
+
+        assertEquals(List.of(25, 5, 0), settings.toConfiguration().positions());
+        assertEquals(INITIAL.ringSettings(), settings.toConfiguration().ringSettings());
+    }
+
+    @Test
+    void ringSettingsAreEditedPerSlot() {
+        settings.ringSettingProperty(1).set(25);
+
+        assertEquals(List.of(1, 25, 3), settings.toConfiguration().ringSettings());
+        assertEquals(INITIAL.positions(), settings.toConfiguration().positions());
+    }
+
+    @Test
+    void swappingRotorsLeavesPositionsAndRingsInTheirSlots() {
+        settings.rotorProperty(0).set(RotorDefinition.III);
+
+        assertEquals(INITIAL.positions(), settings.toConfiguration().positions());
+        assertEquals(INITIAL.ringSettings(), settings.toConfiguration().ringSettings());
     }
 }
