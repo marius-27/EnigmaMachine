@@ -113,6 +113,53 @@ class SettingsViewModelTest {
     }
 
     @Test
+    void loadReplacesEverySetting() {
+        MachineConfiguration other = new MachineConfiguration(
+                List.of(RotorDefinition.III, RotorDefinition.I, RotorDefinition.II),
+                Reflector.C,
+                List.of(10, 11, 12),
+                List.of(13, 14, 15),
+                List.of("CD", "EF"));
+
+        settings.load(other);
+
+        assertEquals(other, settings.toConfiguration());
+        assertTrue(settings.unappliedChangesBinding().get());
+    }
+
+    @Test
+    void loadWorksForEveryRotorArrangement() {
+        for (RotorDefinition left : RotorDefinition.values()) {
+            for (RotorDefinition middle : RotorDefinition.values()) {
+                for (RotorDefinition right : RotorDefinition.values()) {
+                    if (left == middle || middle == right || left == right) {
+                        continue;
+                    }
+                    MachineConfiguration other = new MachineConfiguration(
+                            List.of(left, middle, right), Reflector.B, List.of(1, 2, 3), List.of(4, 5, 6), List.of("AB"));
+
+                    settings.load(other);
+
+                    assertEquals(other, settings.toConfiguration());
+                }
+            }
+        }
+    }
+
+    @Test
+    void loadDropsAWaitingLetterAndUpdatesTheWarning() {
+        press("CDEFGHIJKLMNOPQRSTUVW");
+        assertEquals("W", settings.pendingPlugboardLetterProperty().get());
+        assertEquals("The M3 normally used at most 10 pairs.", settings.plugboardWarningProperty().get());
+
+        settings.load(INITIAL);
+
+        assertEquals("", settings.pendingPlugboardLetterProperty().get());
+        assertEquals("", settings.plugboardWarningProperty().get());
+        assertFalse(settings.unappliedChangesBinding().get());
+    }
+
+    @Test
     void twoLettersFormAPair() {
         press("CD");
 

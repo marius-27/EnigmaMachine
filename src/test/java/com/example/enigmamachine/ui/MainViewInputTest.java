@@ -548,6 +548,31 @@ class MainViewInputTest {
     }
 
     @Test
+    void fileActionsAreOfferedAndDoNotTakeTheFocus() {
+        onFxThread(() -> {
+            for (String action : List.of(".save-settings", ".load-settings")) {
+                Button button = (Button) view.lookup(action);
+                assertFalse(button.isDisabled());
+                assertFalse(button.isFocusTraversable());
+            }
+        });
+    }
+
+    @Test
+    void fileMessageIsShownInTheSettings() {
+        onFxThread(() -> {
+            Label message = (Label) view.lookup(".settings-file-message");
+            assertEquals("", message.getText());
+            assertFalse(message.isManaged());
+
+            controller.settings().showFileMessage("Saved machine.json.");
+
+            assertEquals("Saved machine.json.", message.getText());
+            assertTrue(message.isManaged());
+        });
+    }
+
+    @Test
     void backspaceKeepsDeletingWhileHeld() {
         onFxThread(() -> {
             tap(scene, "h", KeyCode.H);
