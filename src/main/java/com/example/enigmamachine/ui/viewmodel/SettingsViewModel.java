@@ -1,12 +1,18 @@
 package com.example.enigmamachine.ui.viewmodel;
 
+import com.example.enigmamachine.domain.Alphabet;
 import com.example.enigmamachine.domain.MachineConfiguration;
 import com.example.enigmamachine.domain.Reflector;
 import com.example.enigmamachine.domain.RotorDefinition;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 
 /**
  * The settings being edited. They stay separate from the running machine until they are applied.
@@ -15,14 +21,20 @@ import javafx.beans.property.SimpleObjectProperty;
  */
 public final class SettingsViewModel {
 
-    private final MachineConfiguration initial;
+    private static final int USUAL_PLUGBOARD_PAIRS = 10;
+
     private final List<ObjectProperty<RotorDefinition>> rotors = new ArrayList<>();
+    private final ObservableList<String> plugboardPairs = FXCollections.observableArrayList();
+    private final ObservableList<String> readOnlyPlugboardPairs = FXCollections.unmodifiableObservableList(plugboardPairs);
+    private final ReadOnlyStringWrapper pendingPlugboardLetter = new ReadOnlyStringWrapper("");
+    private final ReadOnlyStringWrapper plugboardWarning = new ReadOnlyStringWrapper("");
     private final List<ObjectProperty<Integer>> positions;
     private final List<ObjectProperty<Integer>> ringSettings;
     private final ObjectProperty<Reflector> reflector;
 
     public SettingsViewModel(MachineConfiguration initial) {
-        this.initial = initial;
+        plugboardPairs.addListener((ListChangeListener<String>) change -> updatePlugboardWarning());
+        initial.plugboardPairs().forEach(pair -> connect(pair.charAt(0), pair.charAt(1)));
         this.reflector = new SimpleObjectProperty<>(initial.reflector());
         this.positions = propertiesOf(initial.positions());
         this.ringSettings = propertiesOf(initial.ringSettings());
@@ -53,13 +65,59 @@ public final class SettingsViewModel {
         return reflector;
     }
 
+    /** The connected pairs in alphabetical order, each written like "AB". */
+    public ObservableList<String> plugboardPairs() {
+        return readOnlyPlugboardPairs;
+    }
+
+    /** The letter waiting for a partner, or an empty string when none is. */
+    public ReadOnlyStringProperty pendingPlugboardLetterProperty() {
+        return pendingPlugboardLetter.getReadOnlyProperty();
+    }
+
+    /** A note for more pairs than were usual on the M3, or an empty string. It never blocks the settings. */
+    public ReadOnlyStringProperty plugboardWarningProperty() {
+        return plugboardWarning.getReadOnlyProperty();
+    }
+
+    /**
+     * A connected letter loses its pair. Otherwise the first letter waits for a partner, pressing it again
+     * cancels the wait, and a second letter completes the pair. A letter can therefore never be in two pairs.
+     */
+    public void pressPlugboardLetter(char key) {
+        char letter = Alphabet.normalize(key);
+        String pending = pendingPlugboardLetter.get();
+        pendingPlugboardLetter.set("");
+
+        boolean disconnected = plugboardPairs.removeIf(pair -> pair.indexOf(letter) >= 0);
+        if (disconnected || pending.equals(String.valueOf(letter))) {
+            return;
+        }
+        if (pending.isEmpty()) {
+            pendingPlugboardLetter.set(String.valueOf(letter));
+        } else {
+            connect(pending.charAt(0), letter);
+        }
+    }
+
     public MachineConfiguration toConfiguration() {
         return new MachineConfiguration(
                 valuesOf(rotors),
                 reflector.get(),
                 valuesOf(ringSettings),
                 valuesOf(positions),
-                initial.plugboardPairs());
+                List.copyOf(plugboardPairs));
+    }
+
+    private void connect(char first, char second) {
+        plugboardPairs.add(first < second ? "" + first + second : "" + second + first);
+        FXCollections.sort(plugboardPairs);
+    }
+
+    private void updatePlugboardWarning() {
+        plugboardWarning.set(plugboardPairs.size() > USUAL_PLUGBOARD_PAIRS
+                ? "The M3 normally used at most " + USUAL_PLUGBOARD_PAIRS + " pairs."
+                : "");
     }
 
     private void swapDuplicate(

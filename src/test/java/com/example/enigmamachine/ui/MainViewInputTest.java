@@ -17,6 +17,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javafx.application.Platform;
+import javafx.css.PseudoClass;
 import javafx.event.Event;
 import javafx.event.EventTarget;
 import javafx.geometry.Orientation;
@@ -24,6 +25,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
@@ -232,6 +234,49 @@ class MainViewInputTest {
             controller.clear();
 
             view.lookupAll(".message-area").forEach(area -> assertEquals("", ((TextArea) area).getText()));
+        });
+    }
+
+    @Test
+    void clickingPlugboardSocketsEditsTheSettingsNotTheMachine() {
+        onFxThread(() -> {
+            socketLabeled("A").fire();
+            socketLabeled("M").fire();
+
+            assertEquals(List.of("AM"), controller.settings().plugboardPairs());
+            assertState("", "", "AAA");
+        });
+    }
+
+    @Test
+    void plugboardSocketsShowTheirState() {
+        onFxThread(() -> {
+            socketLabeled("A").fire();
+            assertTrue(hasState(socketLabeled("A"), "pending"));
+
+            socketLabeled("M").fire();
+            assertFalse(hasState(socketLabeled("A"), "pending"));
+            assertTrue(hasState(socketLabeled("A"), "connected"));
+            assertTrue(hasState(socketLabeled("M"), "connected"));
+            assertFalse(hasState(socketLabeled("B"), "connected"));
+
+            socketLabeled("M").fire();
+            assertFalse(hasState(socketLabeled("A"), "connected"));
+        });
+    }
+
+    @Test
+    void plugboardConnectionsAreListed() {
+        onFxThread(() -> {
+            Label connections = (Label) view.lookup(".plugboard-connections");
+            assertEquals("No connections", connections.getText());
+
+            controller.settings().pressPlugboardLetter('C');
+            controller.settings().pressPlugboardLetter('D');
+            controller.settings().pressPlugboardLetter('A');
+            controller.settings().pressPlugboardLetter('B');
+
+            assertEquals("AB CD", connections.getText());
         });
     }
 
@@ -447,6 +492,18 @@ class MainViewInputTest {
                 .filter(bar -> bar.getOrientation() == Orientation.VERTICAL)
                 .findFirst()
                 .orElseThrow();
+    }
+
+    private Button socketLabeled(String letter) {
+        return view.lookupAll(".plugboard-socket").stream()
+                .map(Button.class::cast)
+                .filter(socket -> socket.getText().equals(letter))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static boolean hasState(Node node, String state) {
+        return node.getPseudoClassStates().contains(PseudoClass.getPseudoClass(state));
     }
 
     private Button buttonLabeled(String title) {

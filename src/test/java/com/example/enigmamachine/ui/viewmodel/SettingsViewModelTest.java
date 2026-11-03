@@ -1,6 +1,7 @@
 package com.example.enigmamachine.ui.viewmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.example.enigmamachine.domain.MachineConfiguration;
 import com.example.enigmamachine.domain.Reflector;
@@ -59,6 +60,83 @@ class SettingsViewModelTest {
         assertEquals(INITIAL.ringSettings(), edited.ringSettings());
         assertEquals(INITIAL.positions(), edited.positions());
         assertEquals(INITIAL.plugboardPairs(), edited.plugboardPairs());
+    }
+
+    @Test
+    void twoLettersFormAPair() {
+        press("CD");
+
+        assertEquals(List.of("AB", "CD"), settings.toConfiguration().plugboardPairs());
+        assertEquals("", settings.pendingPlugboardLetterProperty().get());
+    }
+
+    @Test
+    void firstLetterWaitsForItsPartner() {
+        press("C");
+
+        assertEquals("C", settings.pendingPlugboardLetterProperty().get());
+        assertEquals(List.of("AB"), settings.toConfiguration().plugboardPairs());
+    }
+
+    @Test
+    void pairsAreWrittenAndListedAlphabetically() {
+        press("ZY");
+        press("DC");
+
+        assertEquals(List.of("AB", "CD", "YZ"), settings.plugboardPairs());
+    }
+
+    @Test
+    void pressingTheWaitingLetterAgainCancelsIt() {
+        press("CC");
+
+        assertEquals("", settings.pendingPlugboardLetterProperty().get());
+        assertEquals(List.of("AB"), settings.plugboardPairs());
+    }
+
+    @Test
+    void pressingAConnectedLetterRemovesItsPair() {
+        press("B");
+
+        assertEquals(List.of(), settings.plugboardPairs());
+        assertEquals("", settings.pendingPlugboardLetterProperty().get());
+    }
+
+    @Test
+    void aWaitingLetterCannotJoinALetterThatIsAlreadyConnected() {
+        press("CA");
+
+        assertEquals(List.of(), settings.plugboardPairs());
+        assertEquals("", settings.pendingPlugboardLetterProperty().get());
+    }
+
+    @Test
+    void allThirteenPairsAreAcceptedByTheEngine() {
+        press("CDEFGHIJKLMNOPQRSTUVWXYZ");
+
+        assertEquals(13, settings.toConfiguration().plugboardPairs().size());
+    }
+
+    @Test
+    void warnsOnlyAboveTenPairs() {
+        press("CDEFGHIJKLMNOPQRST");
+        assertEquals(10, settings.plugboardPairs().size());
+        assertEquals("", settings.plugboardWarningProperty().get());
+
+        press("UV");
+        assertEquals("The M3 normally used at most 10 pairs.", settings.plugboardWarningProperty().get());
+
+        press("U");
+        assertEquals("", settings.plugboardWarningProperty().get());
+    }
+
+    @Test
+    void plugboardListCannotBeChangedFromOutside() {
+        assertThrows(UnsupportedOperationException.class, () -> settings.plugboardPairs().clear());
+    }
+
+    private void press(String letters) {
+        letters.chars().forEach(letter -> settings.pressPlugboardLetter((char) letter));
     }
 
     @Test

@@ -128,6 +128,44 @@
     -fx-border-width: 0 1 1 1;
 }
 
+.plugboard-socket {
+    -fx-min-width: 28px;
+    -fx-min-height: 28px;
+    -fx-max-width: 28px;
+    -fx-max-height: 28px;
+    -fx-padding: 0;
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 12px;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
+    -fx-border-color: -enigma-border;
+}
+
+.plugboard-socket:hover {
+    -fx-border-color: -enigma-gold;
+}
+
+.plugboard-socket:connected {
+    -fx-background-color: -enigma-gold;
+    -fx-text-fill: -enigma-background;
+    -fx-font-weight: bold;
+}
+
+.plugboard-socket:pending {
+    -fx-border-color: -enigma-gold-bright;
+    -fx-border-width: 2;
+    -fx-text-fill: -enigma-gold-bright;
+    -fx-font-weight: bold;
+}
+
+.plugboard-connections {
+    -fx-font-family: "Consolas", monospace;
+}
+
+.plugboard-warning {
+    -fx-text-fill: -enigma-gold-bright;
+}
+
 .button:disabled {
     -fx-opacity: 0.45;
 }

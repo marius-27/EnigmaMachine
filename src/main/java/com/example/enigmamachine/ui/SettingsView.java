@@ -37,6 +37,7 @@ public final class SettingsView extends GridPane {
         }
         addRow(settings.rotorSlots() + 1, new Label("Reflector"),
                 selector("reflector-selector", List.of(Reflector.values()), settings.reflectorProperty(), String::valueOf));
+        add(new PlugboardView(settings), 0, settings.rotorSlots() + 2, 4, 1);
     }
 
     private static String positionLabel(int index) {
