@@ -109,6 +109,17 @@ class EnigmaServiceTest {
         assertEquals('B', service.encrypt('A'));
     }
 
+    @Test
+    void tracedLetterEncryptsAndCanBeUndoneLikeAnyOther() {
+        EnigmaService service = service(List.of(0, 0, 0));
+
+        assertEquals('B', service.encryptTraced('A').output());
+        assertEquals("AAB", service.rotorWindows());
+
+        assertTrue(service.undoLastLetter());
+        assertEquals("AAA", service.rotorWindows());
+    }
+
     private static EnigmaService service(List<Integer> positions) {
         return new EnigmaService(new MachineConfiguration(
                 List.of(RotorDefinition.I, RotorDefinition.II, RotorDefinition.III),

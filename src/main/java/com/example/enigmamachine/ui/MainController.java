@@ -1,6 +1,7 @@
 package com.example.enigmamachine.ui;
 
 import com.example.enigmamachine.domain.Alphabet;
+import com.example.enigmamachine.domain.SignalTrace;
 import com.example.enigmamachine.engine.EnigmaService;
 import com.example.enigmamachine.ui.viewmodel.MachineViewModel;
 import com.example.enigmamachine.ui.viewmodel.SettingsViewModel;
@@ -68,10 +69,13 @@ public final class MainController {
             return;
         }
         StringBuilder output = new StringBuilder(letters.length());
+        SignalTrace lastTrace = null;
         for (char letter : letters.toCharArray()) {
-            output.append(service.encrypt(letter));
+            lastTrace = service.encryptTraced(letter);
+            output.append(lastTrace.output());
         }
         viewModel.appendLetters(letters, output.toString());
+        viewModel.showLastTrace(lastTrace);
         viewModel.showRotorWindows(service.rotorWindows());
     }
 

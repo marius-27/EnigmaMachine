@@ -79,7 +79,7 @@ public final class SettingsView extends GridPane {
         return String.format("%02d", index + 1);
     }
 
-    private static <T> ComboBox<T> selector(
+    static <T> ComboBox<T> selector(
             String styleClass, List<T> choices, Property<T> value, Function<T, String> label) {
         ComboBox<T> selector = new ComboBox<>();
         selector.getItems().setAll(choices);

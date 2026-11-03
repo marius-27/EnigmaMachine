@@ -1,7 +1,11 @@
 package com.example.enigmamachine.domain;
 
+import com.example.enigmamachine.domain.SignalTrace.Stage;
+import com.example.enigmamachine.domain.SignalTrace.Step;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
 
 public final class EnigmaMachine {
 
@@ -42,17 +46,35 @@ public final class EnigmaMachine {
     }
 
     public char encrypt(char letter) {
+        return encryptTraced(letter).output();
+    }
+
+    /**
+     * Encrypts a letter like {@link #encrypt(char)} and also reports every component the signal crossed.
+     */
+    public SignalTrace encryptTraced(char letter) {
         int input = Alphabet.toIndex(letter);
         SteppingMechanism.step(left, middle, right);
-        int signal = plugboard.swap(input);
-        signal = right.forward(signal);
-        signal = middle.forward(signal);
-        signal = left.forward(signal);
-        signal = configuration.reflector().reflect(signal);
-        signal = left.reverse(signal);
-        signal = middle.reverse(signal);
-        signal = right.reverse(signal);
-        return Alphabet.toLetter(plugboard.swap(signal));
+        List<Integer> positions = positions();
+
+        List<Step> steps = new ArrayList<>(Stage.values().length);
+        int signal = pass(steps, Stage.PLUGBOARD_IN, input, plugboard::swap);
+        signal = pass(steps, Stage.RIGHT_ROTOR_FORWARD, signal, right::forward);
+        signal = pass(steps, Stage.MIDDLE_ROTOR_FORWARD, signal, middle::forward);
+        signal = pass(steps, Stage.LEFT_ROTOR_FORWARD, signal, left::forward);
+        signal = pass(steps, Stage.REFLECTOR, signal, configuration.reflector()::reflect);
+        signal = pass(steps, Stage.LEFT_ROTOR_REVERSE, signal, left::reverse);
+        signal = pass(steps, Stage.MIDDLE_ROTOR_REVERSE, signal, middle::reverse);
+        signal = pass(steps, Stage.RIGHT_ROTOR_REVERSE, signal, right::reverse);
+        signal = pass(steps, Stage.PLUGBOARD_OUT, signal, plugboard::swap);
+
+        return new SignalTrace(Alphabet.toLetter(input), Alphabet.toLetter(signal), positions, steps);
+    }
+
+    private static int pass(List<Step> steps, Stage stage, int input, IntUnaryOperator component) {
+        int output = component.applyAsInt(input);
+        steps.add(new Step(stage, Alphabet.toLetter(input), Alphabet.toLetter(output)));
+        return output;
     }
 
     /**

@@ -24,6 +24,7 @@ import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollBar;
@@ -34,6 +35,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -323,6 +325,226 @@ class MainViewInputTest {
 
             assertEquals("HAA", controller.viewModel().rotorWindowsProperty().get());
         });
+    }
+
+    @Test
+    void rotorWindowsShowTheRealPositionsFromTheFirstMomentOfTheAnimation() {
+        onFxThread(() -> {
+            assertEquals("AAA", shownRotorLetters());
+
+            tap(scene, "h", KeyCode.H);
+            assertEquals("AAB", shownRotorLetters());
+
+            tap(scene, "e", KeyCode.E);
+            assertEquals("AAC", shownRotorLetters());
+        });
+    }
+
+    @Test
+    void rotorWindowsFollowTheEngineThroughADoubleStep() {
+        onFxThread(() -> {
+            integerSelectorInRow(".position-selector", 2).setValue(3);
+            integerSelectorInRow(".position-selector", 3).setValue(20);
+            ((Button) view.lookup(".apply-settings")).fire();
+            assertEquals("ADU", shownRotorLetters());
+
+            tap(scene, "a", KeyCode.A);
+            assertEquals(controller.viewModel().rotorWindowsProperty().get(), shownRotorLetters());
+            tap(scene, "a", KeyCode.A);
+            assertEquals(controller.viewModel().rotorWindowsProperty().get(), shownRotorLetters());
+            tap(scene, "b", KeyCode.B);
+            assertEquals("BFX", shownRotorLetters());
+        });
+    }
+
+    @Test
+    void rotorWindowsFollowBackspaceResetAndLongPastes() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+            tap(scene, "i", KeyCode.I);
+
+            tap(scene, "", KeyCode.BACK_SPACE);
+            assertEquals("AAB", shownRotorLetters());
+
+            controller.pasteText("A".repeat(30));
+            assertEquals(controller.viewModel().rotorWindowsProperty().get(), shownRotorLetters());
+
+            controller.reset();
+            assertEquals("AAA", shownRotorLetters());
+        });
+    }
+
+    private String shownRotorLetters() {
+        StringBuilder letters = new StringBuilder();
+        for (Node window : ((Pane) view.lookup(".rotor-windows")).getChildren()) {
+            letters.append(((Label) window.lookup(".rotor-window-current")).getText());
+        }
+        return letters.toString();
+    }
+
+    @Test
+    void signalPathStartsEmptyAndRevealsOnlyTheFirstStep() {
+        onFxThread(() -> {
+            assertEquals(9, view.lookupAll(".signal-step").size());
+            assertEquals("Press a key to see its signal path.", ((Label) view.lookup(".signal-summary")).getText());
+
+            tap(scene, "h", KeyCode.H);
+
+            assertEquals("H → I, rotors at AAB", ((Label) view.lookup(".signal-summary")).getText());
+            long active = view.lookupAll(".signal-step").stream().filter(row -> hasState(row, "active")).count();
+            long revealed = view.lookupAll(".signal-letters").stream().filter(Node::isVisible).count();
+            assertEquals(1, active);
+            assertEquals(1, revealed);
+        });
+    }
+
+    @Test
+    void signalPathEmptiesWhenTheMessageIsCleared() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            controller.clear();
+
+            assertEquals("Press a key to see its signal path.", ((Label) view.lookup(".signal-summary")).getText());
+            assertEquals(0, view.lookupAll(".signal-step").stream().filter(row -> hasState(row, "active")).count());
+        });
+    }
+
+    @Test
+    void signalControlsAreOffWithoutALetter() {
+        onFxThread(() -> {
+            assertTrue(signalButton(".signal-play").isDisabled());
+            assertTrue(signalButton(".signal-step-button").isDisabled());
+            assertEquals("Play", signalButton(".signal-play").getText());
+        });
+    }
+
+    @Test
+    void letterPlaysOnItsOwnOutsideEducationalMode() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            assertEquals("Pause", signalButton(".signal-play").getText());
+        });
+    }
+
+    @Test
+    void educationalModeWaitsAtTheFirstStep() {
+        onFxThread(() -> {
+            educationalMode().setSelected(true);
+
+            tap(scene, "h", KeyCode.H);
+
+            assertEquals("Play", signalButton(".signal-play").getText());
+            assertEquals(1, revealedSteps());
+        });
+    }
+
+    @Test
+    void stepMovesOneComponentAtATimeAndStopsAtTheLast() {
+        onFxThread(() -> {
+            educationalMode().setSelected(true);
+            tap(scene, "h", KeyCode.H);
+            Button step = signalButton(".signal-step-button");
+
+            step.fire();
+            assertEquals(2, revealedSteps());
+
+            for (int remaining = 0; remaining < 7; remaining++) {
+                step.fire();
+            }
+            assertEquals(9, revealedSteps());
+            assertTrue(step.isDisabled());
+        });
+    }
+
+    @Test
+    void playAfterTheLastStepStartsOver() {
+        onFxThread(() -> {
+            educationalMode().setSelected(true);
+            tap(scene, "h", KeyCode.H);
+            for (int step = 0; step < 8; step++) {
+                signalButton(".signal-step-button").fire();
+            }
+
+            signalButton(".signal-play").fire();
+
+            assertEquals(1, revealedSteps());
+            assertEquals("Pause", signalButton(".signal-play").getText());
+        });
+    }
+
+    @Test
+    void pauseAndStepStopThePlayback() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            signalButton(".signal-play").fire();
+            assertEquals("Play", signalButton(".signal-play").getText());
+
+            signalButton(".signal-play").fire();
+            assertEquals("Pause", signalButton(".signal-play").getText());
+
+            signalButton(".signal-step-button").fire();
+            assertEquals("Play", signalButton(".signal-play").getText());
+        });
+    }
+
+    @Test
+    void turningOnEducationalModeStopsThePlayback() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            educationalMode().setSelected(true);
+
+            assertEquals("Play", signalButton(".signal-play").getText());
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void speedSelectorChangesThePlaybackRate() {
+        onFxThread(() -> {
+            ComboBox<Double> speed = (ComboBox<Double>) view.lookup(".signal-speed");
+            SignalPathView signal = (SignalPathView) view.lookup(".signal-summary").getParent();
+            assertEquals(1.0, signal.playbackRate());
+            assertEquals("0.5×", speed.getConverter().toString(0.5));
+            assertEquals("4×", speed.getConverter().toString(4.0));
+
+            speed.setValue(4.0);
+
+            assertEquals(4.0, signal.playbackRate());
+        });
+    }
+
+    @Test
+    void controlsDoNotChangeTheEncryption() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+            signalButton(".signal-play").fire();
+            signalButton(".signal-step-button").fire();
+            signalButton(".signal-play").fire();
+            educationalMode().setSelected(true);
+            tap(scene, "e", KeyCode.E);
+            signalButton(".signal-step-button").fire();
+            tap(scene, "l", KeyCode.L);
+            tap(scene, "l", KeyCode.L);
+            tap(scene, "o", KeyCode.O);
+
+            assertState("HELLO", "ILBDA", "AAF");
+        });
+    }
+
+    private Button signalButton(String selector) {
+        return (Button) view.lookup(selector);
+    }
+
+    private CheckBox educationalMode() {
+        return (CheckBox) view.lookup(".signal-educational");
+    }
+
+    private long revealedSteps() {
+        return view.lookupAll(".signal-letters").stream().filter(Node::isVisible).count();
     }
 
     @Test
