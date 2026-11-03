@@ -8,11 +8,14 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 public final class MainView extends BorderPane {
 
     private static final double SPACING = 12;
     private static final double MESSAGES_WIDTH = 320;
+
+    private final KeyboardView keyboardView = new KeyboardView();
 
     public MainView(MainController controller) {
         Label rotorWindows = new Label();
@@ -21,7 +24,7 @@ public final class MainView extends BorderPane {
 
         TitledPane rotors = section("Rotors", rotorWindows);
         TitledPane lampboard = section("Lampboard", new Pane());
-        TitledPane keyboard = section("Keyboard", new Pane());
+        TitledPane keyboard = section("Keyboard", keyboardView);
         TitledPane messages = section("Messages", new Pane());
 
         VBox machine = new VBox(SPACING, rotors, lampboard, keyboard);
@@ -34,6 +37,11 @@ public final class MainView extends BorderPane {
         setCenter(machine);
         setRight(messages);
         setPadding(new Insets(SPACING));
+    }
+
+    /** Connects the physical keyboard; call after the stage has its scene. */
+    public void attachTo(Stage stage) {
+        keyboardView.attachTo(stage);
     }
 
     private static TitledPane section(String title, Node content) {

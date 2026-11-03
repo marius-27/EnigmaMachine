@@ -30,11 +30,13 @@ public class App extends Application {
     public void start(Stage stage) {
         MainController controller = new MainController(new EnigmaService(DEFAULT_CONFIGURATION));
 
-        Scene scene = new Scene(new MainView(controller), WIDTH, HEIGHT);
+        MainView view = new MainView(controller);
+        Scene scene = new Scene(view, WIDTH, HEIGHT);
         scene.getStylesheets().add(Objects.requireNonNull(App.class.getResource(STYLESHEET)).toExternalForm());
 
         stage.setTitle("Enigma M3");
         stage.setScene(scene);
+        view.attachTo(stage);
         stage.setMinWidth(MIN_WIDTH);
         stage.setMinHeight(MIN_HEIGHT);
         stage.show();
