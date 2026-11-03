@@ -103,8 +103,46 @@ class MainViewInputTest {
         onFxThread(() -> {
             fire(scene, new KeyEvent(KeyEvent.KEY_PRESSED, "c", "c", KeyCode.C, false, true, false, false));
             fire(scene, new KeyEvent(KeyEvent.KEY_PRESSED, "c", "c", KeyCode.C, false, false, true, false));
-            tap(scene, " ", KeyCode.SPACE);
             tap(scene, "7", KeyCode.DIGIT7);
+
+            assertState("", "", "AAA");
+        });
+    }
+
+    @Test
+    void spaceIsEncryptedAsTheLetterX() {
+        onFxThread(() -> {
+            tap(scene, " ", KeyCode.SPACE);
+
+            assertEquals("X", controller.viewModel().inputTextProperty().get());
+            assertEquals("AAB", controller.viewModel().rotorWindowsProperty().get());
+        });
+    }
+
+    @Test
+    void spaceWorksWithoutEventText() {
+        onFxThread(() -> {
+            tap(scene, "", KeyCode.SPACE);
+
+            assertEquals("X", controller.viewModel().inputTextProperty().get());
+        });
+    }
+
+    @Test
+    void holdingSpaceProcessesOneLetter() {
+        onFxThread(() -> {
+            press(scene, " ", KeyCode.SPACE);
+            press(scene, " ", KeyCode.SPACE);
+            release(scene, KeyCode.SPACE);
+
+            assertEquals("X", controller.viewModel().inputTextProperty().get());
+        });
+    }
+
+    @Test
+    void spaceWithAShortcutModifierIsIgnored() {
+        onFxThread(() -> {
+            fire(scene, new KeyEvent(KeyEvent.KEY_PRESSED, " ", " ", KeyCode.SPACE, false, true, false, false));
 
             assertState("", "", "AAA");
         });

@@ -10,6 +10,7 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
@@ -100,7 +101,7 @@ public final class KeyboardView extends VBox {
         if (shortcut) {
             return Optional.empty();
         }
-        String text = event.getText();
+        String text = event.getCode() == KeyCode.SPACE ? " " : event.getText();
         Optional<Character> typed = text.isEmpty() ? Optional.empty() : LetterFolding.toLetter(text.charAt(0));
         if (typed.isPresent() || altGr) {
             return typed;
