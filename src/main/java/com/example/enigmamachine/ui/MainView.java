@@ -2,7 +2,6 @@ package com.example.enigmamachine.ui;
 
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TitledPane;
@@ -20,15 +19,11 @@ public final class MainView extends BorderPane {
     private final KeyboardView keyboardView = new KeyboardView();
 
     public MainView(MainController controller) {
-        Label rotorWindows = new Label();
-        rotorWindows.getStyleClass().add("rotor-windows");
-        rotorWindows.textProperty().bind(controller.viewModel().rotorWindowsProperty());
-
         keyboardView.setOnLetterPressed(controller::pressKey);
         keyboardView.setOnBackspacePressed(controller::deleteLastLetter);
         keyboardView.setOnPastePressed(() -> controller.pasteText(Clipboard.getSystemClipboard().getString()));
 
-        TitledPane rotors = section("Rotors", rotorWindows);
+        TitledPane rotors = section("Rotors", new RotorWindowsView(controller.viewModel().rotorWindowsProperty()));
         TitledPane lampboard = section("Lampboard", new LampboardView(controller.viewModel().litLampProperty()));
         TitledPane keyboard = section("Keyboard", keyboardView);
 

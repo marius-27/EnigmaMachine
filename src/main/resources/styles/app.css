@@ -35,9 +35,16 @@
     -fx-border-width: 0 1 1 1;
 }
 
-.rotor-windows {
+.rotor-window {
+    -fx-background-color: #17191c;
+    -fx-background-radius: 4px;
+    -fx-border-color: -enigma-border;
+    -fx-border-radius: 4px;
+}
+
+.rotor-window-letter {
     -fx-font-family: "Consolas", monospace;
-    -fx-font-size: 32px;
+    -fx-font-size: 28px;
     -fx-font-weight: bold;
     -fx-text-fill: -enigma-gold-bright;
 }

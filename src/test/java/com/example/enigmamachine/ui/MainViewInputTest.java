@@ -34,6 +34,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -323,6 +324,61 @@ class MainViewInputTest {
 
             assertEquals("HAA", controller.viewModel().rotorWindowsProperty().get());
         });
+    }
+
+    @Test
+    void rotorWindowsShowTheRealPositionsFromTheFirstMomentOfTheAnimation() {
+        onFxThread(() -> {
+            assertEquals("AAA", shownRotorLetters());
+
+            tap(scene, "h", KeyCode.H);
+            assertEquals("AAB", shownRotorLetters());
+
+            tap(scene, "e", KeyCode.E);
+            assertEquals("AAC", shownRotorLetters());
+        });
+    }
+
+    @Test
+    void rotorWindowsFollowTheEngineThroughADoubleStep() {
+        onFxThread(() -> {
+            integerSelectorInRow(".position-selector", 2).setValue(3);
+            integerSelectorInRow(".position-selector", 3).setValue(20);
+            ((Button) view.lookup(".apply-settings")).fire();
+            assertEquals("ADU", shownRotorLetters());
+
+            tap(scene, "a", KeyCode.A);
+            assertEquals(controller.viewModel().rotorWindowsProperty().get(), shownRotorLetters());
+            tap(scene, "a", KeyCode.A);
+            assertEquals(controller.viewModel().rotorWindowsProperty().get(), shownRotorLetters());
+            tap(scene, "b", KeyCode.B);
+            assertEquals("BFX", shownRotorLetters());
+        });
+    }
+
+    @Test
+    void rotorWindowsFollowBackspaceResetAndLongPastes() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+            tap(scene, "i", KeyCode.I);
+
+            tap(scene, "", KeyCode.BACK_SPACE);
+            assertEquals("AAB", shownRotorLetters());
+
+            controller.pasteText("A".repeat(30));
+            assertEquals(controller.viewModel().rotorWindowsProperty().get(), shownRotorLetters());
+
+            controller.reset();
+            assertEquals("AAA", shownRotorLetters());
+        });
+    }
+
+    private String shownRotorLetters() {
+        StringBuilder letters = new StringBuilder();
+        for (Node window : ((Pane) view.lookup(".rotor-windows")).getChildren()) {
+            letters.append(((Label) window.lookup(".rotor-window-current")).getText());
+        }
+        return letters.toString();
     }
 
     @Test
