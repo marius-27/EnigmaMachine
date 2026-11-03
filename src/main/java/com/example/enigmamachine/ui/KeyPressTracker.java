@@ -1,22 +1,26 @@
 package com.example.enigmamachine.ui;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Optional;
+import javafx.scene.input.KeyCode;
 
 /**
  * Tells a new key press apart from the repeats the operating system sends while a key is held down.
+ * Each key remembers its letter, because a key release does not always say which character it typed.
  */
 final class KeyPressTracker {
 
-    private final Set<Character> heldKeys = new HashSet<>();
+    private final Map<KeyCode, Character> heldKeys = new EnumMap<>(KeyCode.class);
 
     /** Returns true only for the first press of a key that is not already held. */
-    boolean press(char key) {
-        return heldKeys.add(key);
+    boolean press(KeyCode key, char letter) {
+        return heldKeys.putIfAbsent(key, letter) == null;
     }
 
-    void release(char key) {
-        heldKeys.remove(key);
+    /** Returns the letter the key was pressed with, or empty if the key was not being tracked. */
+    Optional<Character> release(KeyCode key) {
+        return Optional.ofNullable(heldKeys.remove(key));
     }
 
     void releaseAll() {

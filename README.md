@@ -47,6 +47,7 @@ The engine simulates a three-rotor Enigma M3:
 
 - Only the letters A-Z are encrypted. Lowercase letters are treated as uppercase.
 - When encrypting a message, spaces, digits, punctuation and letters with diacritics are removed and do not step the rotors. They cannot be recovered after decryption.
+- In the desktop app, a typed letter with diacritics becomes its base letter (for example, a T with comma is typed as T). Other characters are ignored and do not step the rotors.
 
 ### Decryption
 

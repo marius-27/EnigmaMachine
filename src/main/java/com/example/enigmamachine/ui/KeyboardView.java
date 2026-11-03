@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
@@ -73,22 +74,17 @@ public final class KeyboardView extends VBox {
     }
 
     private void handlePhysicalPress(KeyEvent event) {
-        if (!event.getCode().isLetterKey() || event.isControlDown() || event.isAltDown() || event.isMetaDown()) {
-            return;
-        }
-        char letter = letterOf(event);
-        if (physicalKeys.press(letter)) {
-            keys.get(letter).pseudoClassStateChanged(HELD, true);
-            onLetterPressed.accept(letter);
-        }
+        letterOf(event).ifPresent(letter -> {
+            if (physicalKeys.press(event.getCode(), letter)) {
+                keys.get(letter).pseudoClassStateChanged(HELD, true);
+                onLetterPressed.accept(letter);
+            }
+        });
     }
 
     private void handlePhysicalRelease(KeyEvent event) {
-        if (event.getCode().isLetterKey()) {
-            char letter = letterOf(event);
-            physicalKeys.release(letter);
-            keys.get(letter).pseudoClassStateChanged(HELD, false);
-        }
+        physicalKeys.release(event.getCode())
+                .ifPresent(letter -> keys.get(letter).pseudoClassStateChanged(HELD, false));
     }
 
     private void releaseAllPhysicalKeys() {
@@ -96,7 +92,19 @@ public final class KeyboardView extends VBox {
         keys.values().forEach(key -> key.pseudoClassStateChanged(HELD, false));
     }
 
-    private static char letterOf(KeyEvent event) {
-        return event.getCode().getName().charAt(0);
+    private static Optional<Character> letterOf(KeyEvent event) {
+        // Ctrl and Alt together mean AltGr, which types characters such as a T with comma on Romanian layouts.
+        boolean altGr = event.isControlDown() && event.isAltDown();
+        boolean shortcut = event.isMetaDown() || (event.isControlDown() != event.isAltDown());
+        if (shortcut) {
+            return Optional.empty();
+        }
+        String text = event.getText();
+        Optional<Character> typed = text.isEmpty() ? Optional.empty() : LetterFolding.toLetter(text.charAt(0));
+        if (typed.isPresent() || altGr) {
+            return typed;
+        }
+        // Non-Latin layouts type other alphabets, but the key code still names the Latin letter.
+        return event.getCode().isLetterKey() ? Optional.of(event.getCode().getName().charAt(0)) : Optional.empty();
     }
 }
