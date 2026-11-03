@@ -30,9 +30,48 @@ public final class MainController {
         if (!Alphabet.isValid(key)) {
             return;
         }
-        char input = Alphabet.normalize(key);
-        char output = service.encrypt(input);
-        viewModel.appendLetters(input, output);
+        process(String.valueOf(Alphabet.normalize(key)));
+    }
+
+    /**
+     * Processes pasted text from the current rotor positions. Whitespace is skipped rather than typed as X,
+     * because ciphertext is often written in groups of letters and an extra X would corrupt its decryption.
+     */
+    public void pasteText(String text) {
+        if (text == null) {
+            return;
+        }
+        StringBuilder letters = new StringBuilder(text.length());
+        for (char typed : text.toCharArray()) {
+            if (!Character.isWhitespace(typed)) {
+                LetterFolding.toLetter(typed).ifPresent(letters::append);
+            }
+        }
+        process(letters.toString());
+    }
+
+    /**
+     * Runs the output back through the machine from where the message began, so it becomes the new input.
+     * The rotors end where they were, because the same number of letters is processed again.
+     */
+    public void decrypt() {
+        String ciphertext = viewModel.outputTextProperty().get();
+        while (service.undoLastLetter()) {
+            // Each call moves the rotors one letter closer to the start of the message.
+        }
+        viewModel.clearMessages();
+        process(ciphertext);
+    }
+
+    private void process(String letters) {
+        if (letters.isEmpty()) {
+            return;
+        }
+        StringBuilder output = new StringBuilder(letters.length());
+        for (char letter : letters.toCharArray()) {
+            output.append(service.encrypt(letter));
+        }
+        viewModel.appendLetters(letters, output.toString());
         viewModel.showRotorWindows(service.rotorWindows());
     }
 

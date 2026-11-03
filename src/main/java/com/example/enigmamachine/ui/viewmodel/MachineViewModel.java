@@ -31,10 +31,10 @@ public final class MachineViewModel {
         rotorWindows.set(windows);
     }
 
-    public void appendLetters(char input, char output) {
+    public void appendLetters(String input, String output) {
         inputText.set(inputText.get() + input);
         outputText.set(outputText.get() + output);
-        litLamp.set(String.valueOf(output));
+        litLamp.set(output.substring(output.length() - 1));
     }
 
     public void removeLastLetters() {

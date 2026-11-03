@@ -6,6 +6,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TitledPane;
+import javafx.scene.input.Clipboard;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -25,6 +26,7 @@ public final class MainView extends BorderPane {
 
         keyboardView.setOnLetterPressed(controller::pressKey);
         keyboardView.setOnBackspacePressed(controller::deleteLastLetter);
+        keyboardView.setOnPastePressed(() -> controller.pasteText(Clipboard.getSystemClipboard().getString()));
 
         TitledPane rotors = section("Rotors", rotorWindows);
         TitledPane lampboard = section("Lampboard", new LampboardView(controller.viewModel().litLampProperty()));

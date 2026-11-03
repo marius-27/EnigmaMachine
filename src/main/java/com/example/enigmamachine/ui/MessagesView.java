@@ -26,8 +26,13 @@ public final class MessagesView extends VBox {
         TextArea input = messageArea(viewModel.inputTextProperty());
         TextArea output = messageArea(viewModel.outputTextProperty());
 
+        Button decrypt = action(
+                "Decrypt", "Run the output back through the machine from where the message began.", controller::decrypt);
+        decrypt.disableProperty().bind(viewModel.outputTextProperty().isEmpty());
+
         HBox actions = new HBox(SPACING,
-                action("Clear", "Empty the messages; the rotors stay where they are.", controller::clear),
+                decrypt,
+                action("Clear","Empty the messages; the rotors stay where they are.", controller::clear),
                 action("Reset", "Empty the messages and restore the initial rotor positions.", controller::reset));
         actions.setAlignment(Pos.CENTER_RIGHT);
 

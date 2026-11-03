@@ -30,6 +30,7 @@ public final class KeyboardView extends VBox {
     private final KeyPressTracker physicalKeys = new KeyPressTracker();
     private Consumer<Character> onLetterPressed = letter -> { };
     private Runnable onBackspacePressed = () -> { };
+    private Runnable onPastePressed = () -> { };
 
     public KeyboardView() {
         super(SPACING);
@@ -50,6 +51,10 @@ public final class KeyboardView extends VBox {
 
     public void setOnBackspacePressed(Runnable handler) {
         onBackspacePressed = Objects.requireNonNull(handler, "Backspace handler is required.");
+    }
+
+    public void setOnPastePressed(Runnable handler) {
+        onPastePressed = Objects.requireNonNull(handler, "Paste handler is required.");
     }
 
     /** Listens to the physical keyboard while the given stage has its scene shown. */
@@ -85,6 +90,13 @@ public final class KeyboardView extends VBox {
             // Unlike a letter, Backspace keeps deleting while it is held down.
             if (!event.isControlDown() && !event.isAltDown() && !event.isMetaDown()) {
                 onBackspacePressed.run();
+            }
+            return;
+        }
+        if (event.getCode() == KeyCode.V && event.isShortcutDown() && !event.isAltDown()) {
+            // Holding the keys must not paste the same text again and again.
+            if (physicalKeys.press(KeyCode.V, 'V')) {
+                onPastePressed.run();
             }
             return;
         }

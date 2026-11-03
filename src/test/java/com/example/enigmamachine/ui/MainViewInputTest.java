@@ -1,12 +1,15 @@
 package com.example.enigmamachine.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.example.enigmamachine.domain.MachineConfiguration;
 import com.example.enigmamachine.domain.Reflector;
 import com.example.enigmamachine.domain.RotorDefinition;
 import com.example.enigmamachine.engine.EnigmaService;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -186,6 +189,54 @@ class MainViewInputTest {
     }
 
     @Test
+    void decryptIsAvailableOnlyWhenThereIsOutput() {
+        onFxThread(() -> {
+            Button decrypt = buttonLabeled("Decrypt");
+            assertTrue(decrypt.isDisabled());
+
+            tap(scene, "h", KeyCode.H);
+
+            assertFalse(decrypt.isDisabled());
+        });
+    }
+
+    @Test
+    void decryptButtonRunsTheOutputBackThroughTheMachine() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            buttonLabeled("Decrypt").fire();
+
+            assertState("I", "H", "AAB");
+        });
+    }
+
+    @Test
+    void pasteShortcutFiresOncePerPressAndIsNotTypedAsALetter() {
+        onFxThread(() -> {
+            // A separate keyboard keeps this test away from the system clipboard.
+            KeyboardView keyboard = new KeyboardView();
+            List<Character> letters = new ArrayList<>();
+            int[] pastes = {0};
+            keyboard.setOnLetterPressed(letters::add);
+            keyboard.setOnPastePressed(() -> pastes[0]++);
+            Stage stage = new Stage();
+            stage.setScene(new Scene(keyboard));
+            keyboard.attachTo(stage);
+            Scene keyboardScene = stage.getScene();
+
+            KeyEvent ctrlV = new KeyEvent(KeyEvent.KEY_PRESSED, "v", "v", KeyCode.V, false, true, false, false);
+            fire(keyboardScene, ctrlV.copyFor(keyboardScene, keyboardScene));
+            fire(keyboardScene, ctrlV.copyFor(keyboardScene, keyboardScene));
+            release(keyboardScene, KeyCode.V);
+            fire(keyboardScene, ctrlV.copyFor(keyboardScene, keyboardScene));
+
+            assertEquals(2, pastes[0]);
+            assertEquals(List.of(), letters);
+        });
+    }
+
+    @Test
     void altGrDiacriticIsTypedAsItsBaseLetter() {
         onFxThread(() -> {
             fire(scene, new KeyEvent(KeyEvent.KEY_PRESSED, "ț", "ț", KeyCode.T, false, true, true, false));
@@ -290,6 +341,14 @@ class MainViewInputTest {
         assertEquals(input, controller.viewModel().inputTextProperty().get());
         assertEquals(output, controller.viewModel().outputTextProperty().get());
         assertEquals(rotors, controller.viewModel().rotorWindowsProperty().get());
+    }
+
+    private Button buttonLabeled(String title) {
+        return view.lookupAll(".button").stream()
+                .filter(node -> node instanceof Button button && title.equals(button.getText()))
+                .map(Button.class::cast)
+                .findFirst()
+                .orElseThrow();
     }
 
     private Node keyLabeled(String letter) {

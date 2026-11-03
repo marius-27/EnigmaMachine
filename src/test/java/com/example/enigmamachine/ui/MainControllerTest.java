@@ -287,6 +287,113 @@ class MainControllerTest {
         assertEquals(output, typed.viewModel().outputTextProperty().get());
     }
 
+    @Test
+    void decryptTurnsTheOutputBackIntoTheMessage() {
+        controller.pasteText("HELLO");
+
+        controller.decrypt();
+
+        assertEquals("ILBDA", viewModel.inputTextProperty().get());
+        assertEquals("HELLO", viewModel.outputTextProperty().get());
+        assertEquals("O", viewModel.litLampProperty().get());
+        assertEquals("AAF", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void decryptTwiceReturnsToTheCiphertext() {
+        controller.pasteText("HELLO");
+
+        controller.decrypt();
+        controller.decrypt();
+
+        assertEquals("HELLO", viewModel.inputTextProperty().get());
+        assertEquals("ILBDA", viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void decryptStartsWhereTheMessageBeganAfterClear() {
+        controller.pasteText("ABC");
+        controller.clear();
+        controller.pasteText("HELLO");
+
+        controller.decrypt();
+
+        assertEquals("HELLO", viewModel.outputTextProperty().get());
+        assertEquals("AAI", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void decryptOfAnEmptyMessageChangesNothing() {
+        controller.pressKey('A');
+        controller.clear();
+
+        controller.decrypt();
+
+        assertEquals("", viewModel.inputTextProperty().get());
+        assertEquals("AAB", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void lettersRemainUndoableOneByOneAfterDecrypt() {
+        controller.pasteText("HELLO");
+        controller.decrypt();
+
+        controller.deleteLastLetter();
+
+        assertEquals("ILBD", viewModel.inputTextProperty().get());
+        assertEquals("HELL", viewModel.outputTextProperty().get());
+        assertEquals("AAE", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void pastedTextMatchesTypingItsLetters() {
+        controller.pasteText("HELLO");
+
+        assertEquals("HELLO", viewModel.inputTextProperty().get());
+        assertEquals("ILBDA", viewModel.outputTextProperty().get());
+        assertEquals("A", viewModel.litLampProperty().get());
+        assertEquals("AAF", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void pastedCiphertextInGroupsDecryptsCorrectly() {
+        controller.pasteText("IL BDA\r\n\t");
+
+        assertEquals("HELLO", viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void pasteFoldsDiacriticsAndDropsOtherCharacters() {
+        controller.pasteText("ț-a,7!");
+
+        assertEquals("TA", viewModel.inputTextProperty().get());
+        assertEquals("AAC", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void pasteWithoutLettersChangesNothing() {
+        controller.pressKey('A');
+
+        controller.pasteText(" 7! ");
+        controller.pasteText("");
+        controller.pasteText(null);
+
+        assertEquals("A", viewModel.inputTextProperty().get());
+        assertEquals("B", viewModel.litLampProperty().get());
+        assertEquals("AAB", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void longPastedTextMatchesTheEngine() {
+        String message = "ENIGMA".repeat(2000);
+
+        MainController typed = new MainController(new EnigmaService(STARTING_MID_MESSAGE));
+        typed.pasteText(message);
+
+        assertEquals(new EnigmaMachine(STARTING_MID_MESSAGE).encryptText(message),
+                typed.viewModel().outputTextProperty().get());
+    }
+
     private static String windowsOf(EnigmaMachine machine) {
         StringBuilder windows = new StringBuilder();
         machine.positions().forEach(position -> windows.append(Alphabet.toLetter(position)));

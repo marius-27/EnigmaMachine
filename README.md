@@ -54,6 +54,11 @@ The engine simulates a three-rotor Enigma M3:
 
 Enigma is reciprocal: to decrypt, restore the initial settings and encrypt the ciphertext. Rotor positions change with every letter, so decrypting from already advanced positions produces the wrong text.
 
+In the desktop app there are two shortcuts:
+
+- **Decrypt** runs the current output back through the machine from where the message began.
+- **Ctrl+V** processes pasted text from the current rotor positions. To decrypt a received message, press Reset first and use the settings it was encrypted with. Spaces and line breaks in pasted text are skipped, so ciphertext written in groups of letters decrypts correctly.
+
 ### Limitations
 
 - Rotors VI, VII and VIII are not supported.
