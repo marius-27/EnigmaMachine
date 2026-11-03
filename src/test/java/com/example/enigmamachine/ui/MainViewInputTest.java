@@ -19,10 +19,13 @@ import java.util.concurrent.TimeUnit;
 import javafx.application.Platform;
 import javafx.event.Event;
 import javafx.event.EventTarget;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ScrollBar;
+import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -191,6 +194,44 @@ class MainViewInputTest {
             integerSelectorInRow(".position-selector", 1).setValue(7);
 
             assertEquals("AAA", controller.viewModel().rotorWindowsProperty().get());
+        });
+    }
+
+    @Test
+    void messageAreasStayAtTheNewestLettersWhileTyping() {
+        onFxThread(() -> {
+            controller.pasteText("A".repeat(3000));
+            scene.snapshot(null);
+
+            tap(scene, "h", KeyCode.H);
+            scene.snapshot(null);
+            tap(scene, "i", KeyCode.I);
+            scene.snapshot(null);
+
+            for (Node area : view.lookupAll(".message-area")) {
+                ScrollBar bar = verticalScrollBar(area);
+                assertTrue(bar.isVisible(), "The text must be long enough to scroll.");
+                assertEquals(bar.getMax(), bar.getValue(), "The view jumped away from the newest letters.");
+            }
+        });
+    }
+
+    @Test
+    void messageAreasShowTheSameTextAsTheMessages() {
+        onFxThread(() -> {
+            controller.pasteText("HELLO");
+            controller.deleteLastLetter();
+            controller.decrypt();
+
+            List<String> shown = view.lookupAll(".message-area").stream()
+                    .map(area -> ((TextArea) area).getText())
+                    .sorted()
+                    .toList();
+            assertEquals(List.of("HELL", "ILBD"), shown);
+
+            controller.clear();
+
+            view.lookupAll(".message-area").forEach(area -> assertEquals("", ((TextArea) area).getText()));
         });
     }
 
@@ -396,6 +437,14 @@ class MainViewInputTest {
         return view.lookupAll(selector).stream()
                 .filter(node -> GridPane.getRowIndex(node) == row)
                 .map(node -> (ComboBox<Integer>) node)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static ScrollBar verticalScrollBar(Node area) {
+        return area.lookupAll(".scroll-bar").stream()
+                .map(ScrollBar.class::cast)
+                .filter(bar -> bar.getOrientation() == Orientation.VERTICAL)
                 .findFirst()
                 .orElseThrow();
     }
