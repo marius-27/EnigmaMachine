@@ -143,7 +143,9 @@ public final class SettingsViewModel {
                 || !plugboardPairs.equals(current.plugboardPairs());
     }
 
-    private void connect(char first, char second) {
+    private void connect(char firstLetter, char secondLetter) {
+        char first = Alphabet.normalize(firstLetter);
+        char second = Alphabet.normalize(secondLetter);
         plugboardPairs.add(first < second ? "" + first + second : "" + second + first);
         FXCollections.sort(plugboardPairs);
     }
