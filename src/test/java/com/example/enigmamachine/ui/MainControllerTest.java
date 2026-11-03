@@ -394,6 +394,112 @@ class MainControllerTest {
                 typed.viewModel().outputTextProperty().get());
     }
 
+    @Test
+    void editingSettingsDoesNotTouchAMessageInProgress() {
+        controller.pressKey('A');
+
+        controller.settings().reflectorProperty().set(Reflector.C);
+        controller.pressKey('A');
+
+        assertEquals("BD", viewModel.outputTextProperty().get());
+        assertEquals("AAC", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void applyingRunsTheMachineWithTheEditedSettings() {
+        applyMidMessageSettings();
+
+        controller.pasteText("ENIGMAMACHINE");
+
+        assertEquals(new EnigmaMachine(STARTING_MID_MESSAGE).encryptText("ENIGMAMACHINE"),
+                viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void applyingEmptiesTheMessageAndShowsTheNewPositions() {
+        controller.pressKey('A');
+
+        applyMidMessageSettings();
+
+        assertEquals("", viewModel.inputTextProperty().get());
+        assertEquals("", viewModel.outputTextProperty().get());
+        assertEquals("", viewModel.litLampProperty().get());
+        assertEquals(windowsOf(new EnigmaMachine(STARTING_MID_MESSAGE)), viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void lettersFromBeforeApplyingCannotBeUndone() {
+        controller.pressKey('A');
+        applyMidMessageSettings();
+        String windows = viewModel.rotorWindowsProperty().get();
+
+        controller.deleteLastLetter();
+
+        assertEquals(windows, viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void resetReturnsToTheAppliedStartPositions() {
+        applyMidMessageSettings();
+        String windows = viewModel.rotorWindowsProperty().get();
+        controller.pressKey('A');
+
+        controller.reset();
+
+        assertEquals(windows, viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void sameSettingsGiveTheSameResultAfterApplyingAgain() {
+        applyMidMessageSettings();
+        controller.pasteText("ENIGMAMACHINE");
+        String first = viewModel.outputTextProperty().get();
+
+        controller.applySettings();
+        controller.pasteText("ENIGMAMACHINE");
+
+        assertEquals(first, viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void decryptAfterApplyingRecoversTheMessage() {
+        applyMidMessageSettings();
+        controller.pasteText("ENIGMAMACHINE");
+
+        controller.decrypt();
+
+        assertEquals("ENIGMAMACHINE", viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void plugboardPairsTakeEffectOnlyAfterApplying() {
+        controller.settings().pressPlugboardLetter('A');
+        controller.settings().pressPlugboardLetter('M');
+        controller.pressKey('A');
+        assertEquals("B", viewModel.outputTextProperty().get());
+
+        controller.applySettings();
+        controller.pressKey('A');
+
+        assertEquals(1, viewModel.outputTextProperty().get().length());
+        assertEquals(new EnigmaMachine(new MachineConfiguration(
+                List.of(RotorDefinition.I, RotorDefinition.II, RotorDefinition.III),
+                Reflector.B,
+                List.of(0, 0, 0),
+                List.of(0, 0, 0),
+                List.of("AM"))).encryptText("A"), viewModel.outputTextProperty().get());
+    }
+
+    private void applyMidMessageSettings() {
+        for (int slot = 0; slot < 3; slot++) {
+            controller.settings().rotorProperty(slot).set(STARTING_MID_MESSAGE.rotors().get(slot));
+            controller.settings().positionProperty(slot).set(STARTING_MID_MESSAGE.positions().get(slot));
+            controller.settings().ringSettingProperty(slot).set(STARTING_MID_MESSAGE.ringSettings().get(slot));
+        }
+        controller.settings().reflectorProperty().set(STARTING_MID_MESSAGE.reflector());
+        controller.applySettings();
+    }
+
     private static String windowsOf(EnigmaMachine machine) {
         StringBuilder windows = new StringBuilder();
         machine.positions().forEach(position -> windows.append(Alphabet.toLetter(position)));

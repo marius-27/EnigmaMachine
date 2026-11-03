@@ -89,6 +89,17 @@ public final class MainController {
         viewModel.clearMessages();
     }
 
+    /**
+     * Starts the machine with the edited settings. The current message was encrypted with the old settings,
+     * so it is emptied rather than left next to letters it could no longer be decrypted with.
+     */
+    public void applySettings() {
+        service.configure(settings.toConfiguration());
+        settings.markApplied();
+        viewModel.clearMessages();
+        viewModel.showRotorWindows(service.rotorWindows());
+    }
+
     /** Does what {@link #clear()} does and also returns the rotors to their initial positions. */
     public void reset() {
         service.reset();

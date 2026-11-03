@@ -1,7 +1,9 @@
 package com.example.enigmamachine.ui.viewmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.example.enigmamachine.domain.MachineConfiguration;
 import com.example.enigmamachine.domain.Reflector;
@@ -18,7 +20,7 @@ class SettingsViewModelTest {
             List.of(4, 5, 6),
             List.of("AB"));
 
-    private final SettingsViewModel settings = new SettingsViewModel(INITIAL);
+    private SettingsViewModel settings = new SettingsViewModel(INITIAL);
 
     @Test
     void startsFromTheGivenConfiguration() {
@@ -60,6 +62,54 @@ class SettingsViewModelTest {
         assertEquals(INITIAL.ringSettings(), edited.ringSettings());
         assertEquals(INITIAL.positions(), edited.positions());
         assertEquals(INITIAL.plugboardPairs(), edited.plugboardPairs());
+    }
+
+    @Test
+    void hasNoUnappliedChangesAtFirst() {
+        assertFalse(settings.unappliedChangesBinding().get());
+    }
+
+    @Test
+    void everyKindOfEditCountsAsAnUnappliedChange() {
+        List<Runnable> edits = List.of(
+                () -> settings.rotorProperty(0).set(RotorDefinition.V),
+                () -> settings.rotorProperty(0).set(RotorDefinition.II),
+                () -> settings.positionProperty(1).set(20),
+                () -> settings.ringSettingProperty(2).set(20),
+                () -> settings.reflectorProperty().set(Reflector.C),
+                () -> press("CD"));
+        for (Runnable edit : edits) {
+            SettingsViewModel fresh = new SettingsViewModel(INITIAL);
+            settings = fresh;
+            edit.run();
+            assertTrue(fresh.unappliedChangesBinding().get());
+        }
+    }
+
+    @Test
+    void undoingAnEditLeavesNoUnappliedChanges() {
+        settings.reflectorProperty().set(Reflector.C);
+        settings.reflectorProperty().set(Reflector.B);
+
+        assertFalse(settings.unappliedChangesBinding().get());
+    }
+
+    @Test
+    void applyingClearsTheUnappliedChangesAndAWaitingLetter() {
+        settings.reflectorProperty().set(Reflector.C);
+        press("C");
+
+        settings.markApplied();
+
+        assertFalse(settings.unappliedChangesBinding().get());
+        assertEquals("", settings.pendingPlugboardLetterProperty().get());
+    }
+
+    @Test
+    void aWaitingLetterIsNotAnUnappliedChange() {
+        press("C");
+
+        assertFalse(settings.unappliedChangesBinding().get());
     }
 
     @Test

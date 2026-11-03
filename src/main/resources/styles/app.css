@@ -166,6 +166,10 @@
     -fx-text-fill: -enigma-gold-bright;
 }
 
+.settings-status {
+    -fx-text-fill: -enigma-gold-bright;
+}
+
 .button:disabled {
     -fx-opacity: 0.45;
 }

@@ -9,18 +9,24 @@ import java.util.List;
 
 public final class EnigmaService {
 
-    private final MachineConfiguration configuration;
-    private final EnigmaMachine machine;
+    private MachineConfiguration configuration;
+    private EnigmaMachine machine;
     // Double stepping cannot be run backwards from a position alone, so each letter records where the rotors were.
     private final Deque<List<Integer>> positionsBeforeLetters = new ArrayDeque<>();
 
     public EnigmaService(MachineConfiguration configuration) {
-        this.configuration = configuration;
-        this.machine = new EnigmaMachine(configuration);
+        configure(configuration);
     }
 
     public MachineConfiguration configuration() {
         return configuration;
+    }
+
+    /** Replaces the machine with one built from the given settings, at its start positions. */
+    public void configure(MachineConfiguration newConfiguration) {
+        machine = new EnigmaMachine(newConfiguration);
+        configuration = newConfiguration;
+        positionsBeforeLetters.clear();
     }
 
     public char encrypt(char letter) {

@@ -281,6 +281,51 @@ class MainViewInputTest {
     }
 
     @Test
+    void applyIsAvailableOnlyWithUnappliedChanges() {
+        onFxThread(() -> {
+            Button apply = (Button) view.lookup(".apply-settings");
+            assertTrue(apply.isDisabled());
+
+            controller.settings().rotorProperty(0).set(RotorDefinition.III);
+            assertFalse(apply.isDisabled());
+
+            apply.fire();
+            assertTrue(apply.isDisabled());
+            assertEquals(List.of(RotorDefinition.III, RotorDefinition.II, RotorDefinition.I),
+                    controller.settings().toConfiguration().rotors());
+        });
+    }
+
+    @Test
+    void settingsStatusWarnsBeforeAMessageIsEmptied() {
+        onFxThread(() -> {
+            Label status = (Label) view.lookup(".settings-status");
+            assertEquals("", status.getText());
+
+            controller.settings().reflectorProperty().set(Reflector.C);
+            assertEquals("Changes are not applied yet.", status.getText());
+
+            tap(scene, "h", KeyCode.H);
+            assertEquals("Applying empties the current message.", status.getText());
+
+            ((Button) view.lookup(".apply-settings")).fire();
+            assertEquals("", status.getText());
+            assertState("", "", "AAA");
+        });
+    }
+
+    @Test
+    void appliedPositionsAppearInTheRotorWindows() {
+        onFxThread(() -> {
+            integerSelectorInRow(".position-selector", 1).setValue(7);
+
+            ((Button) view.lookup(".apply-settings")).fire();
+
+            assertEquals("HAA", controller.viewModel().rotorWindowsProperty().get());
+        });
+    }
+
+    @Test
     void backspaceKeepsDeletingWhileHeld() {
         onFxThread(() -> {
             tap(scene, "h", KeyCode.H);

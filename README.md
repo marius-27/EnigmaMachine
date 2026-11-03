@@ -59,6 +59,10 @@ In the desktop app there are two shortcuts:
 - **Decrypt** runs the current output back through the machine from where the message began.
 - **Ctrl+V** processes pasted text from the current rotor positions. To decrypt a received message, press Reset first and use the settings it was encrypted with. Spaces and line breaks in pasted text are skipped, so ciphertext written in groups of letters decrypts correctly.
 
+### Settings
+
+The Settings tab edits the rotors, start positions, ring settings, reflector and plugboard without touching the running machine. **Apply** starts the machine with them and empties the current message. **Reset** returns the rotors to the start positions of the applied settings.
+
 ### Limitations
 
 - Rotors VI, VII and VIII are not supported.

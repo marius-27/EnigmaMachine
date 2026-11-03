@@ -6,6 +6,9 @@ import com.example.enigmamachine.domain.Reflector;
 import com.example.enigmamachine.domain.RotorDefinition;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -31,6 +34,8 @@ public final class SettingsViewModel {
     private final List<ObjectProperty<Integer>> positions;
     private final List<ObjectProperty<Integer>> ringSettings;
     private final ObjectProperty<Reflector> reflector;
+    private final ObjectProperty<MachineConfiguration> applied = new SimpleObjectProperty<>();
+    private final BooleanBinding unappliedChanges;
 
     public SettingsViewModel(MachineConfiguration initial) {
         plugboardPairs.addListener((ListChangeListener<String>) change -> updatePlugboardWarning());
@@ -43,6 +48,25 @@ public final class SettingsViewModel {
             slot.addListener((observable, previous, current) -> swapDuplicate(slot, previous, current));
             rotors.add(slot);
         }
+        markApplied();
+
+        List<Observable> dependencies = new ArrayList<>(List.of(applied, reflector, plugboardPairs));
+        dependencies.addAll(rotors);
+        dependencies.addAll(positions);
+        dependencies.addAll(ringSettings);
+        this.unappliedChanges = Bindings.createBooleanBinding(
+                this::differsFromApplied, dependencies.toArray(Observable[]::new));
+    }
+
+    /** True while the edited settings differ from those the machine is running with. */
+    public BooleanBinding unappliedChangesBinding() {
+        return unappliedChanges;
+    }
+
+    /** Records that the machine now runs with the edited settings. A letter still waiting for a partner is dropped. */
+    public void markApplied() {
+        pendingPlugboardLetter.set("");
+        applied.set(toConfiguration());
     }
 
     public ObjectProperty<RotorDefinition> rotorProperty(int slot) {
@@ -107,6 +131,16 @@ public final class SettingsViewModel {
                 valuesOf(ringSettings),
                 valuesOf(positions),
                 List.copyOf(plugboardPairs));
+    }
+
+    // Compares the raw values, because a configuration cannot be built while two rotor slots are mid-swap.
+    private boolean differsFromApplied() {
+        MachineConfiguration current = applied.get();
+        return !valuesOf(rotors).equals(current.rotors())
+                || reflector.get() != current.reflector()
+                || !valuesOf(ringSettings).equals(current.ringSettings())
+                || !valuesOf(positions).equals(current.positions())
+                || !plugboardPairs.equals(current.plugboardPairs());
     }
 
     private void connect(char first, char second) {

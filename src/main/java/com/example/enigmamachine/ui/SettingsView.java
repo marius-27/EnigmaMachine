@@ -7,11 +7,15 @@ import com.example.enigmamachine.ui.viewmodel.SettingsViewModel;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.IntStream;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.Property;
 import javafx.geometry.Insets;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
 /**
@@ -23,7 +27,8 @@ public final class SettingsView extends GridPane {
     private static final List<String> ROTOR_SLOTS = List.of("Left", "Middle", "Right");
     private static final List<Integer> ALPHABET_INDEXES = IntStream.range(0, Alphabet.SIZE).boxed().toList();
 
-    public SettingsView(SettingsViewModel settings) {
+    public SettingsView(MainController controller) {
+        SettingsViewModel settings = controller.settings();
         setHgap(SPACING);
         setVgap(SPACING);
         setPadding(new Insets(SPACING));
@@ -38,6 +43,31 @@ public final class SettingsView extends GridPane {
         addRow(settings.rotorSlots() + 1, new Label("Reflector"),
                 selector("reflector-selector", List.of(Reflector.values()), settings.reflectorProperty(), String::valueOf));
         add(new PlugboardView(settings), 0, settings.rotorSlots() + 2, 4, 1);
+        add(applySection(controller), 0, settings.rotorSlots() + 3, 4, 1);
+    }
+
+    private static VBox applySection(MainController controller) {
+        BooleanBinding unapplied = controller.settings().unappliedChangesBinding();
+
+        Button apply = new Button("Apply");
+        apply.getStyleClass().add("apply-settings");
+        // A focused button would fire on Space while a message is being typed.
+        apply.setFocusTraversable(false);
+        apply.disableProperty().bind(unapplied.not());
+        apply.setOnAction(event -> controller.applySettings());
+
+        Label status = new Label();
+        status.getStyleClass().add("settings-status");
+        status.setWrapText(true);
+        status.textProperty().bind(Bindings
+                .when(unapplied.not())
+                .then("")
+                .otherwise(Bindings
+                        .when(controller.viewModel().inputTextProperty().isEmpty())
+                        .then("Changes are not applied yet.")
+                        .otherwise("Applying empties the current message.")));
+
+        return new VBox(SPACING, apply, status);
     }
 
     private static String positionLabel(int index) {
