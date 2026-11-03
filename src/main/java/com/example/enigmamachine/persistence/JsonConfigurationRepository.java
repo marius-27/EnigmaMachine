@@ -2,6 +2,7 @@ package com.example.enigmamachine.persistence;
 
 import com.example.enigmamachine.domain.MachineConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,7 +17,8 @@ import java.nio.file.StandardCopyOption;
  */
 public final class JsonConfigurationRepository implements ConfigurationRepository {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    // Without this, anything after the first JSON value in a file would be ignored without a word.
+    private final ObjectMapper mapper = new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 
     @Override
     public void save(MachineConfiguration configuration, Path file) throws ConfigurationFileException {
