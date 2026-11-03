@@ -515,6 +515,24 @@ class MainControllerTest {
     }
 
     @Test
+    void lastTraceMatchesWhatTheUserSees() {
+        for (char letter : "ENIGMAMACHINE".toCharArray()) {
+            controller.pressKey(letter);
+
+            SignalTrace trace = viewModel.lastTraceProperty().get();
+            String input = viewModel.inputTextProperty().get();
+            String output = viewModel.outputTextProperty().get();
+            StringBuilder traceWindows = new StringBuilder();
+            trace.positions().forEach(position -> traceWindows.append(Alphabet.toLetter(position)));
+
+            assertEquals(input.charAt(input.length() - 1), trace.input());
+            assertEquals(output.charAt(output.length() - 1), trace.steps().getLast().output());
+            assertEquals(String.valueOf(trace.output()), viewModel.litLampProperty().get());
+            assertEquals(traceWindows.toString(), viewModel.rotorWindowsProperty().get());
+        }
+    }
+
+    @Test
     void ignoredKeysLeaveTheLastTraceAsItWas() {
         controller.pressKey('A');
         SignalTrace trace = viewModel.lastTraceProperty().get();
