@@ -31,6 +31,7 @@ public final class SettingsViewModel {
     private final ObservableList<String> readOnlyPlugboardPairs = FXCollections.unmodifiableObservableList(plugboardPairs);
     private final ReadOnlyStringWrapper pendingPlugboardLetter = new ReadOnlyStringWrapper("");
     private final ReadOnlyStringWrapper plugboardWarning = new ReadOnlyStringWrapper("");
+    private final ReadOnlyStringWrapper fileMessage = new ReadOnlyStringWrapper("");
     private final List<ObjectProperty<Integer>> positions;
     private final List<ObjectProperty<Integer>> ringSettings;
     private final ObjectProperty<Reflector> reflector;
@@ -56,6 +57,31 @@ public final class SettingsViewModel {
         dependencies.addAll(ringSettings);
         this.unappliedChanges = Bindings.createBooleanBinding(
                 this::differsFromApplied, dependencies.toArray(Observable[]::new));
+    }
+
+    /**
+     * Fills the editors with the given settings. Like any other edit, this leaves the running machine
+     * alone until the settings are applied.
+     */
+    public void load(MachineConfiguration configuration) {
+        for (int slot = 0; slot < rotors.size(); slot++) {
+            rotors.get(slot).set(configuration.rotors().get(slot));
+            positions.get(slot).set(configuration.positions().get(slot));
+            ringSettings.get(slot).set(configuration.ringSettings().get(slot));
+        }
+        reflector.set(configuration.reflector());
+        pendingPlugboardLetter.set("");
+        plugboardPairs.clear();
+        configuration.plugboardPairs().forEach(pair -> connect(pair.charAt(0), pair.charAt(1)));
+    }
+
+    /** The result of the last save or load, or an empty string before the first one. */
+    public ReadOnlyStringProperty fileMessageProperty() {
+        return fileMessage.getReadOnlyProperty();
+    }
+
+    public void showFileMessage(String message) {
+        fileMessage.set(message);
     }
 
     /** True while the edited settings differ from those the machine is running with. */

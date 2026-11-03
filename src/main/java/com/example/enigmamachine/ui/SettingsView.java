@@ -4,6 +4,7 @@ import com.example.enigmamachine.domain.Alphabet;
 import com.example.enigmamachine.domain.Reflector;
 import com.example.enigmamachine.domain.RotorDefinition;
 import com.example.enigmamachine.ui.viewmodel.SettingsViewModel;
+import java.io.File;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -15,7 +16,9 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
 
 /**
@@ -26,6 +29,9 @@ public final class SettingsView extends GridPane {
     private static final double SPACING = 8;
     private static final List<String> ROTOR_SLOTS = List.of("Left", "Middle", "Right");
     private static final List<Integer> ALPHABET_INDEXES = IntStream.range(0, Alphabet.SIZE).boxed().toList();
+    private static final String DEFAULT_FILE_NAME = "enigma-settings.json";
+
+    private File lastFolder;
 
     public SettingsView(MainController controller) {
         SettingsViewModel settings = controller.settings();
@@ -46,15 +52,13 @@ public final class SettingsView extends GridPane {
         add(applySection(controller), 0, settings.rotorSlots() + 3, 4, 1);
     }
 
-    private static VBox applySection(MainController controller) {
+    private VBox applySection(MainController controller) {
         BooleanBinding unapplied = controller.settings().unappliedChangesBinding();
 
-        Button apply = new Button("Apply");
-        apply.getStyleClass().add("apply-settings");
-        // A focused button would fire on Space while a message is being typed.
-        apply.setFocusTraversable(false);
+        Button apply = action("Apply", "apply-settings", controller::applySettings);
         apply.disableProperty().bind(unapplied.not());
-        apply.setOnAction(event -> controller.applySettings());
+        Button save = action("Save…", "save-settings", () -> chooseFileToSave(controller));
+        Button load = action("Load…", "load-settings", () -> chooseFileToLoad(controller));
 
         Label status = new Label();
         status.getStyleClass().add("settings-status");
@@ -67,7 +71,51 @@ public final class SettingsView extends GridPane {
                         .then("Changes are not applied yet.")
                         .otherwise("Applying empties the current message.")));
 
-        return new VBox(SPACING, apply, status);
+        Label fileMessage = new Label();
+        fileMessage.getStyleClass().add("settings-file-message");
+        fileMessage.setWrapText(true);
+        fileMessage.textProperty().bind(controller.settings().fileMessageProperty());
+        fileMessage.managedProperty().bind(fileMessage.textProperty().isNotEmpty());
+
+        return new VBox(SPACING, new HBox(SPACING, apply, save, load), status, fileMessage);
+    }
+
+    private static Button action(String title, String styleClass, Runnable handler) {
+        Button button = new Button(title);
+        button.getStyleClass().add(styleClass);
+        // A focused button would fire on Space while a message is being typed.
+        button.setFocusTraversable(false);
+        button.setOnAction(event -> handler.run());
+        return button;
+    }
+
+    /** The system dialog asks for confirmation itself before a file is overwritten. */
+    private void chooseFileToSave(MainController controller) {
+        FileChooser chooser = fileChooser("Save settings");
+        chooser.setInitialFileName(DEFAULT_FILE_NAME);
+        File file = chooser.showSaveDialog(getScene().getWindow());
+        if (file != null) {
+            lastFolder = file.getParentFile();
+            controller.saveSettings(file.toPath());
+        }
+    }
+
+    private void chooseFileToLoad(MainController controller) {
+        File file = fileChooser("Load settings").showOpenDialog(getScene().getWindow());
+        if (file != null) {
+            lastFolder = file.getParentFile();
+            controller.loadSettings(file.toPath());
+        }
+    }
+
+    private FileChooser fileChooser(String title) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(title);
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Enigma settings (*.json)", "*.json"));
+        if (lastFolder != null && lastFolder.isDirectory()) {
+            chooser.setInitialDirectory(lastFolder);
+        }
+        return chooser;
     }
 
     private static String positionLabel(int index) {

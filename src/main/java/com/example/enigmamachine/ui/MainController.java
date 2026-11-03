@@ -3,8 +3,12 @@ package com.example.enigmamachine.ui;
 import com.example.enigmamachine.domain.Alphabet;
 import com.example.enigmamachine.domain.SignalTrace;
 import com.example.enigmamachine.engine.EnigmaService;
+import com.example.enigmamachine.persistence.ConfigurationFileException;
+import com.example.enigmamachine.persistence.ConfigurationRepository;
+import com.example.enigmamachine.persistence.JsonConfigurationRepository;
 import com.example.enigmamachine.ui.viewmodel.MachineViewModel;
 import com.example.enigmamachine.ui.viewmodel.SettingsViewModel;
+import java.nio.file.Path;
 import java.util.Objects;
 
 public final class MainController {
@@ -12,9 +16,15 @@ public final class MainController {
     private final EnigmaService service;
     private final MachineViewModel viewModel = new MachineViewModel();
     private final SettingsViewModel settings;
+    private final ConfigurationRepository repository;
 
     public MainController(EnigmaService service) {
+        this(service, new JsonConfigurationRepository());
+    }
+
+    public MainController(EnigmaService service, ConfigurationRepository repository) {
         this.service = Objects.requireNonNull(service, "Enigma service is required.");
+        this.repository = Objects.requireNonNull(repository, "Configuration repository is required.");
         this.settings = new SettingsViewModel(service.configuration());
         viewModel.showRotorWindows(service.rotorWindows());
     }
@@ -25,6 +35,29 @@ public final class MainController {
 
     public SettingsViewModel settings() {
         return settings;
+    }
+
+    /** Saves the settings shown in the editors, reporting the result instead of throwing. */
+    public void saveSettings(Path file) {
+        try {
+            repository.save(settings.toConfiguration(), file);
+            settings.showFileMessage("Saved " + file.getFileName() + ".");
+        } catch (ConfigurationFileException e) {
+            settings.showFileMessage(e.getMessage());
+        }
+    }
+
+    /**
+     * Fills the editors from a file, reporting the result instead of throwing. The running machine and the
+     * current message stay as they are until the settings are applied. A file that cannot be read changes nothing.
+     */
+    public void loadSettings(Path file) {
+        try {
+            settings.load(repository.load(file));
+            settings.showFileMessage("Loaded " + file.getFileName() + ".");
+        } catch (ConfigurationFileException e) {
+            settings.showFileMessage(e.getMessage());
+        }
     }
 
     public void pressKey(char key) {
