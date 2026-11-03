@@ -1,6 +1,7 @@
 package com.example.enigmamachine.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.example.enigmamachine.domain.Alphabet;
@@ -8,6 +9,7 @@ import com.example.enigmamachine.domain.EnigmaMachine;
 import com.example.enigmamachine.domain.MachineConfiguration;
 import com.example.enigmamachine.domain.Reflector;
 import com.example.enigmamachine.domain.RotorDefinition;
+import com.example.enigmamachine.domain.SignalTrace;
 import com.example.enigmamachine.engine.EnigmaService;
 import com.example.enigmamachine.ui.viewmodel.MachineViewModel;
 import java.util.List;
@@ -488,6 +490,39 @@ class MainControllerTest {
                 List.of(0, 0, 0),
                 List.of(0, 0, 0),
                 List.of("AM"))).encryptText("A"), viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void lastTraceDescribesTheLastLetter() {
+        controller.pasteText("HELLO");
+
+        assertEquals('O', viewModel.lastTraceProperty().get().input());
+        assertEquals('A', viewModel.lastTraceProperty().get().output());
+        assertEquals(List.of(0, 0, 5), viewModel.lastTraceProperty().get().positions());
+    }
+
+    @Test
+    void lastTraceIsEmptyAtFirstAndAfterEachWayOfRemovingLetters() {
+        assertNull(viewModel.lastTraceProperty().get());
+        List<Runnable> removals = List.of(
+                controller::deleteLastLetter, controller::clear, controller::reset, controller::applySettings);
+
+        for (Runnable removal : removals) {
+            controller.pressKey('A');
+            removal.run();
+            assertNull(viewModel.lastTraceProperty().get());
+        }
+    }
+
+    @Test
+    void ignoredKeysLeaveTheLastTraceAsItWas() {
+        controller.pressKey('A');
+        SignalTrace trace = viewModel.lastTraceProperty().get();
+
+        controller.pressKey('7');
+        controller.pasteText(" 7! ");
+
+        assertEquals(trace, viewModel.lastTraceProperty().get());
     }
 
     private void applyMidMessageSettings() {

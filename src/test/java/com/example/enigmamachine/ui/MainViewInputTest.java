@@ -382,6 +382,34 @@ class MainViewInputTest {
     }
 
     @Test
+    void signalPathStartsEmptyAndRevealsOnlyTheFirstStep() {
+        onFxThread(() -> {
+            assertEquals(9, view.lookupAll(".signal-step").size());
+            assertEquals("Press a key to see its signal path.", ((Label) view.lookup(".signal-summary")).getText());
+
+            tap(scene, "h", KeyCode.H);
+
+            assertEquals("H → I, rotors at AAB", ((Label) view.lookup(".signal-summary")).getText());
+            long active = view.lookupAll(".signal-step").stream().filter(row -> hasState(row, "active")).count();
+            long revealed = view.lookupAll(".signal-letters").stream().filter(Node::isVisible).count();
+            assertEquals(1, active);
+            assertEquals(1, revealed);
+        });
+    }
+
+    @Test
+    void signalPathEmptiesWhenTheMessageIsCleared() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            controller.clear();
+
+            assertEquals("Press a key to see its signal path.", ((Label) view.lookup(".signal-summary")).getText());
+            assertEquals(0, view.lookupAll(".signal-step").stream().filter(row -> hasState(row, "active")).count());
+        });
+    }
+
+    @Test
     void backspaceKeepsDeletingWhileHeld() {
         onFxThread(() -> {
             tap(scene, "h", KeyCode.H);

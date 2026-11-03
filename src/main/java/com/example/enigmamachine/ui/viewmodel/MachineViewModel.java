@@ -1,5 +1,8 @@
 package com.example.enigmamachine.ui.viewmodel;
 
+import com.example.enigmamachine.domain.SignalTrace;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 
@@ -9,6 +12,7 @@ public final class MachineViewModel {
     private final ReadOnlyStringWrapper inputText = new ReadOnlyStringWrapper("");
     private final ReadOnlyStringWrapper outputText = new ReadOnlyStringWrapper("");
     private final ReadOnlyStringWrapper litLamp = new ReadOnlyStringWrapper("");
+    private final ReadOnlyObjectWrapper<SignalTrace> lastTrace = new ReadOnlyObjectWrapper<>();
 
     public ReadOnlyStringProperty rotorWindowsProperty() {
         return rotorWindows.getReadOnlyProperty();
@@ -27,6 +31,15 @@ public final class MachineViewModel {
         return litLamp.getReadOnlyProperty();
     }
 
+    /** The signal path of the last letter, or null when there is no letter to show it for. */
+    public ReadOnlyObjectProperty<SignalTrace> lastTraceProperty() {
+        return lastTrace.getReadOnlyProperty();
+    }
+
+    public void showLastTrace(SignalTrace trace) {
+        lastTrace.set(trace);
+    }
+
     public void showRotorWindows(String windows) {
         rotorWindows.set(windows);
     }
@@ -42,12 +55,14 @@ public final class MachineViewModel {
         outputText.set(withoutLastLetter(outputText.get()));
         String output = outputText.get();
         litLamp.set(output.isEmpty() ? "" : output.substring(output.length() - 1));
+        lastTrace.set(null);
     }
 
     public void clearMessages() {
         inputText.set("");
         outputText.set("");
         litLamp.set("");
+        lastTrace.set(null);
     }
 
     private static String withoutLastLetter(String text) {

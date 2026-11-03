@@ -33,7 +33,8 @@ public final class MainView extends BorderPane {
 
         TabPane sidePanel = new TabPane(
                 tab("Messages", new MessagesView(controller)),
-                tab("Settings", new SettingsView(controller)));
+                tab("Settings", new SettingsView(controller)),
+                tab("Signal", new SignalPathView(controller.viewModel().lastTraceProperty())));
         sidePanel.setPrefWidth(SIDE_PANEL_WIDTH);
         setMargin(sidePanel, new Insets(0, 0, 0, SPACING));
 

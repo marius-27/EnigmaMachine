@@ -177,6 +177,30 @@
     -fx-text-fill: -enigma-gold-bright;
 }
 
+.signal-summary {
+    -fx-font-weight: bold;
+    -fx-text-fill: -enigma-gold-bright;
+    -fx-padding: 0 0 8 0;
+}
+
+.signal-step {
+    -fx-padding: 6 8;
+    -fx-background-radius: 4px;
+}
+
+.signal-step:active {
+    -fx-background-color: -enigma-gold;
+}
+
+.signal-step:active .label {
+    -fx-text-fill: -enigma-background;
+    -fx-font-weight: bold;
+}
+
+.signal-letters {
+    -fx-font-family: "Consolas", monospace;
+}
+
 .button:disabled {
     -fx-opacity: 0.45;
 }
