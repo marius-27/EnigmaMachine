@@ -1,0 +1,175 @@
+.root {
+    -enigma-background: #15171a;
+    -enigma-panel: #202328;
+    -enigma-border: #3a3e45;
+    -enigma-text: #ece7da;
+    -enigma-gold: #d4af37;
+    -enigma-gold-bright: #f0cf63;
+
+    -fx-base: -enigma-panel;
+    -fx-background: -enigma-background;
+    -fx-control-inner-background: -enigma-panel;
+    -fx-accent: -enigma-gold;
+    -fx-focus-color: -enigma-gold-bright;
+    -fx-faint-focus-color: transparent;
+    -fx-text-base-color: -enigma-text;
+    -fx-background-color: -enigma-background;
+    -fx-font-size: 14px;
+}
+
+.titled-pane > .title {
+    -fx-background-color: -enigma-background, -enigma-panel;
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-border-color: transparent transparent -enigma-gold transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.titled-pane > .title > .text-container > .text {
+    -fx-fill: -enigma-gold-bright;
+    -fx-font-weight: bold;
+}
+
+.titled-pane > .content {
+    -fx-background-color: -enigma-panel;
+    -fx-border-color: -enigma-border;
+    -fx-border-width: 0 1 1 1;
+}
+
+.rotor-windows {
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -enigma-gold-bright;
+}
+
+.button:hover {
+    -fx-border-color: -enigma-gold;
+}
+
+.button:focused {
+    -fx-border-color: -enigma-gold-bright;
+    -fx-border-width: 2;
+}
+
+.button:pressed {
+    -fx-background-color: -enigma-gold;
+    -fx-text-fill: -enigma-background;
+}
+
+.keyboard-key {
+    -fx-min-width: 44px;
+    -fx-min-height: 44px;
+    -fx-max-width: 44px;
+    -fx-max-height: 44px;
+    -fx-padding: 0;
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-weight: bold;
+    -fx-background-radius: 22px;
+    -fx-border-radius: 22px;
+    -fx-border-color: -enigma-border;
+}
+
+.keyboard-key:hover {
+    -fx-border-color: -enigma-gold;
+}
+
+.keyboard-key:held {
+    -fx-background-color: -enigma-gold;
+    -fx-text-fill: -enigma-background;
+}
+
+.lamp {
+    -fx-min-width: 44px;
+    -fx-min-height: 44px;
+    -fx-max-width: 44px;
+    -fx-max-height: 44px;
+    -fx-alignment: center;
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-weight: bold;
+    -fx-text-fill: #8a8578;
+    -fx-background-color: #17191c;
+    -fx-background-radius: 22px;
+    -fx-border-radius: 22px;
+    -fx-border-color: -enigma-border;
+}
+
+.lamp:lit {
+    -fx-text-fill: -enigma-background;
+    -fx-background-color: -enigma-gold-bright;
+    -fx-border-color: -enigma-gold-bright;
+    -fx-effect: dropshadow(gaussian, -enigma-gold-bright, 16, 0.4, 0, 0);
+}
+
+.message-area {
+    -fx-font-family: "Consolas", monospace;
+}
+
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: -enigma-background;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: -enigma-panel;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-border-color: transparent transparent -enigma-gold transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: -enigma-gold-bright;
+    -fx-font-weight: bold;
+}
+
+.tab-pane > .tab-content-area {
+    -fx-background-color: -enigma-panel;
+    -fx-border-color: -enigma-border;
+    -fx-border-width: 0 1 1 1;
+}
+
+.plugboard-socket {
+    -fx-min-width: 28px;
+    -fx-min-height: 28px;
+    -fx-max-width: 28px;
+    -fx-max-height: 28px;
+    -fx-padding: 0;
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 12px;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
+    -fx-border-color: -enigma-border;
+}
+
+.plugboard-socket:hover {
+    -fx-border-color: -enigma-gold;
+}
+
+.plugboard-socket:connected {
+    -fx-background-color: -enigma-gold;
+    -fx-text-fill: -enigma-background;
+    -fx-font-weight: bold;
+}
+
+.plugboard-socket:pending {
+    -fx-border-color: -enigma-gold-bright;
+    -fx-border-width: 2;
+    -fx-text-fill: -enigma-gold-bright;
+    -fx-font-weight: bold;
+}
+
+.plugboard-connections {
+    -fx-font-family: "Consolas", monospace;
+}
+
+.plugboard-warning {
+    -fx-text-fill: -enigma-gold-bright;
+}
+
+.settings-status {
+    -fx-text-fill: -enigma-gold-bright;
+}
+
+.button:disabled {
+    -fx-opacity: 0.45;
+}
