@@ -214,6 +214,292 @@ class MainControllerTest {
         assertEquals(message, typed.viewModel().outputTextProperty().get());
     }
 
+    @Test
+    void backspaceRemovesTheLastLetterAndRestoresTheRotors() {
+        controller.pressKey('A');
+        controller.pressKey('A');
+
+        controller.deleteLastLetter();
+
+        assertEquals("A", viewModel.inputTextProperty().get());
+        assertEquals("B", viewModel.outputTextProperty().get());
+        assertEquals("B", viewModel.litLampProperty().get());
+        assertEquals("AAB", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void backspaceOfTheOnlyLetterTurnsTheLampOff() {
+        controller.pressKey('A');
+
+        controller.deleteLastLetter();
+
+        assertEquals("", viewModel.inputTextProperty().get());
+        assertEquals("", viewModel.litLampProperty().get());
+        assertEquals("AAA", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void backspaceOnAnEmptyMessageDoesNothing() {
+        controller.deleteLastLetter();
+
+        assertEquals("", viewModel.inputTextProperty().get());
+        assertEquals("AAA", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void backspaceAfterClearLeavesTheRotorsWhereTheyAre() {
+        controller.pressKey('A');
+        controller.clear();
+
+        controller.deleteLastLetter();
+
+        assertEquals("AAB", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void backspaceAfterResetDoesNothing() {
+        controller.pressKey('A');
+        controller.reset();
+
+        controller.deleteLastLetter();
+
+        assertEquals("AAA", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void backspaceUndoesADoubleStepAndRetypingGivesTheSameLetters() {
+        MainController typed = new MainController(new EnigmaService(new MachineConfiguration(
+                List.of(RotorDefinition.I, RotorDefinition.II, RotorDefinition.III),
+                Reflector.B,
+                List.of(0, 0, 0),
+                List.of(0, 3, 20),
+                List.of())));
+        "AAAA".chars().forEach(letter -> typed.pressKey((char) letter));
+        String output = typed.viewModel().outputTextProperty().get();
+
+        typed.deleteLastLetter();
+        typed.deleteLastLetter();
+        assertEquals("AEW", typed.viewModel().rotorWindowsProperty().get());
+        typed.deleteLastLetter();
+        assertEquals("ADV", typed.viewModel().rotorWindowsProperty().get());
+
+        "AAA".chars().forEach(letter -> typed.pressKey((char) letter));
+        assertEquals(output, typed.viewModel().outputTextProperty().get());
+    }
+
+    @Test
+    void decryptTurnsTheOutputBackIntoTheMessage() {
+        controller.pasteText("HELLO");
+
+        controller.decrypt();
+
+        assertEquals("ILBDA", viewModel.inputTextProperty().get());
+        assertEquals("HELLO", viewModel.outputTextProperty().get());
+        assertEquals("O", viewModel.litLampProperty().get());
+        assertEquals("AAF", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void decryptTwiceReturnsToTheCiphertext() {
+        controller.pasteText("HELLO");
+
+        controller.decrypt();
+        controller.decrypt();
+
+        assertEquals("HELLO", viewModel.inputTextProperty().get());
+        assertEquals("ILBDA", viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void decryptStartsWhereTheMessageBeganAfterClear() {
+        controller.pasteText("ABC");
+        controller.clear();
+        controller.pasteText("HELLO");
+
+        controller.decrypt();
+
+        assertEquals("HELLO", viewModel.outputTextProperty().get());
+        assertEquals("AAI", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void decryptOfAnEmptyMessageChangesNothing() {
+        controller.pressKey('A');
+        controller.clear();
+
+        controller.decrypt();
+
+        assertEquals("", viewModel.inputTextProperty().get());
+        assertEquals("AAB", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void lettersRemainUndoableOneByOneAfterDecrypt() {
+        controller.pasteText("HELLO");
+        controller.decrypt();
+
+        controller.deleteLastLetter();
+
+        assertEquals("ILBD", viewModel.inputTextProperty().get());
+        assertEquals("HELL", viewModel.outputTextProperty().get());
+        assertEquals("AAE", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void pastedTextMatchesTypingItsLetters() {
+        controller.pasteText("HELLO");
+
+        assertEquals("HELLO", viewModel.inputTextProperty().get());
+        assertEquals("ILBDA", viewModel.outputTextProperty().get());
+        assertEquals("A", viewModel.litLampProperty().get());
+        assertEquals("AAF", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void pastedCiphertextInGroupsDecryptsCorrectly() {
+        controller.pasteText("IL BDA\r\n\t");
+
+        assertEquals("HELLO", viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void pasteFoldsDiacriticsAndDropsOtherCharacters() {
+        controller.pasteText("ț-a,7!");
+
+        assertEquals("TA", viewModel.inputTextProperty().get());
+        assertEquals("AAC", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void pasteWithoutLettersChangesNothing() {
+        controller.pressKey('A');
+
+        controller.pasteText(" 7! ");
+        controller.pasteText("");
+        controller.pasteText(null);
+
+        assertEquals("A", viewModel.inputTextProperty().get());
+        assertEquals("B", viewModel.litLampProperty().get());
+        assertEquals("AAB", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void longPastedTextMatchesTheEngine() {
+        String message = "ENIGMA".repeat(2000);
+
+        MainController typed = new MainController(new EnigmaService(STARTING_MID_MESSAGE));
+        typed.pasteText(message);
+
+        assertEquals(new EnigmaMachine(STARTING_MID_MESSAGE).encryptText(message),
+                typed.viewModel().outputTextProperty().get());
+    }
+
+    @Test
+    void editingSettingsDoesNotTouchAMessageInProgress() {
+        controller.pressKey('A');
+
+        controller.settings().reflectorProperty().set(Reflector.C);
+        controller.pressKey('A');
+
+        assertEquals("BD", viewModel.outputTextProperty().get());
+        assertEquals("AAC", viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void applyingRunsTheMachineWithTheEditedSettings() {
+        applyMidMessageSettings();
+
+        controller.pasteText("ENIGMAMACHINE");
+
+        assertEquals(new EnigmaMachine(STARTING_MID_MESSAGE).encryptText("ENIGMAMACHINE"),
+                viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void applyingEmptiesTheMessageAndShowsTheNewPositions() {
+        controller.pressKey('A');
+
+        applyMidMessageSettings();
+
+        assertEquals("", viewModel.inputTextProperty().get());
+        assertEquals("", viewModel.outputTextProperty().get());
+        assertEquals("", viewModel.litLampProperty().get());
+        assertEquals(windowsOf(new EnigmaMachine(STARTING_MID_MESSAGE)), viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void lettersFromBeforeApplyingCannotBeUndone() {
+        controller.pressKey('A');
+        applyMidMessageSettings();
+        String windows = viewModel.rotorWindowsProperty().get();
+
+        controller.deleteLastLetter();
+
+        assertEquals(windows, viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void resetReturnsToTheAppliedStartPositions() {
+        applyMidMessageSettings();
+        String windows = viewModel.rotorWindowsProperty().get();
+        controller.pressKey('A');
+
+        controller.reset();
+
+        assertEquals(windows, viewModel.rotorWindowsProperty().get());
+    }
+
+    @Test
+    void sameSettingsGiveTheSameResultAfterApplyingAgain() {
+        applyMidMessageSettings();
+        controller.pasteText("ENIGMAMACHINE");
+        String first = viewModel.outputTextProperty().get();
+
+        controller.applySettings();
+        controller.pasteText("ENIGMAMACHINE");
+
+        assertEquals(first, viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void decryptAfterApplyingRecoversTheMessage() {
+        applyMidMessageSettings();
+        controller.pasteText("ENIGMAMACHINE");
+
+        controller.decrypt();
+
+        assertEquals("ENIGMAMACHINE", viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void plugboardPairsTakeEffectOnlyAfterApplying() {
+        controller.settings().pressPlugboardLetter('A');
+        controller.settings().pressPlugboardLetter('M');
+        controller.pressKey('A');
+        assertEquals("B", viewModel.outputTextProperty().get());
+
+        controller.applySettings();
+        controller.pressKey('A');
+
+        assertEquals(1, viewModel.outputTextProperty().get().length());
+        assertEquals(new EnigmaMachine(new MachineConfiguration(
+                List.of(RotorDefinition.I, RotorDefinition.II, RotorDefinition.III),
+                Reflector.B,
+                List.of(0, 0, 0),
+                List.of(0, 0, 0),
+                List.of("AM"))).encryptText("A"), viewModel.outputTextProperty().get());
+    }
+
+    private void applyMidMessageSettings() {
+        for (int slot = 0; slot < 3; slot++) {
+            controller.settings().rotorProperty(slot).set(STARTING_MID_MESSAGE.rotors().get(slot));
+            controller.settings().positionProperty(slot).set(STARTING_MID_MESSAGE.positions().get(slot));
+            controller.settings().ringSettingProperty(slot).set(STARTING_MID_MESSAGE.ringSettings().get(slot));
+        }
+        controller.settings().reflectorProperty().set(STARTING_MID_MESSAGE.reflector());
+        controller.applySettings();
+    }
+
     private static String windowsOf(EnigmaMachine machine) {
         StringBuilder windows = new StringBuilder();
         machine.positions().forEach(position -> windows.append(Alphabet.toLetter(position)));

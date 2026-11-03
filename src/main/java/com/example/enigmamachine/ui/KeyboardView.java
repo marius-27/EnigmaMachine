@@ -10,6 +10,7 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
@@ -28,6 +29,8 @@ public final class KeyboardView extends VBox {
     private final Map<Character, Button> keys = new HashMap<>();
     private final KeyPressTracker physicalKeys = new KeyPressTracker();
     private Consumer<Character> onLetterPressed = letter -> { };
+    private Runnable onBackspacePressed = () -> { };
+    private Runnable onPastePressed = () -> { };
 
     public KeyboardView() {
         super(SPACING);
@@ -44,6 +47,14 @@ public final class KeyboardView extends VBox {
 
     public void setOnLetterPressed(Consumer<Character> handler) {
         onLetterPressed = Objects.requireNonNull(handler, "Letter handler is required.");
+    }
+
+    public void setOnBackspacePressed(Runnable handler) {
+        onBackspacePressed = Objects.requireNonNull(handler, "Backspace handler is required.");
+    }
+
+    public void setOnPastePressed(Runnable handler) {
+        onPastePressed = Objects.requireNonNull(handler, "Paste handler is required.");
     }
 
     /** Listens to the physical keyboard while the given stage has its scene shown. */
@@ -75,6 +86,20 @@ public final class KeyboardView extends VBox {
     }
 
     private void handlePhysicalPress(KeyEvent event) {
+        if (event.getCode() == KeyCode.BACK_SPACE) {
+            // Unlike a letter, Backspace keeps deleting while it is held down.
+            if (!event.isControlDown() && !event.isAltDown() && !event.isMetaDown()) {
+                onBackspacePressed.run();
+            }
+            return;
+        }
+        if (event.getCode() == KeyCode.V && event.isShortcutDown() && !event.isAltDown()) {
+            // Holding the keys must not paste the same text again and again.
+            if (physicalKeys.press(KeyCode.V, 'V')) {
+                onPastePressed.run();
+            }
+            return;
+        }
         letterOf(event).ifPresent(letter -> {
             if (physicalKeys.press(event.getCode(), letter)) {
                 keys.get(letter).pseudoClassStateChanged(HELD, true);
@@ -100,7 +125,7 @@ public final class KeyboardView extends VBox {
         if (shortcut) {
             return Optional.empty();
         }
-        String text = event.getText();
+        String text = event.getCode() == KeyCode.SPACE ? " " : event.getText();
         Optional<Character> typed = text.isEmpty() ? Optional.empty() : LetterFolding.toLetter(text.charAt(0));
         if (typed.isPresent() || altGr) {
             return typed;

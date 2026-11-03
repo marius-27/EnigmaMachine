@@ -104,6 +104,72 @@
     -fx-font-family: "Consolas", monospace;
 }
 
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: -enigma-background;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: -enigma-panel;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-border-color: transparent transparent -enigma-gold transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: -enigma-gold-bright;
+    -fx-font-weight: bold;
+}
+
+.tab-pane > .tab-content-area {
+    -fx-background-color: -enigma-panel;
+    -fx-border-color: -enigma-border;
+    -fx-border-width: 0 1 1 1;
+}
+
+.plugboard-socket {
+    -fx-min-width: 28px;
+    -fx-min-height: 28px;
+    -fx-max-width: 28px;
+    -fx-max-height: 28px;
+    -fx-padding: 0;
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 12px;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
+    -fx-border-color: -enigma-border;
+}
+
+.plugboard-socket:hover {
+    -fx-border-color: -enigma-gold;
+}
+
+.plugboard-socket:connected {
+    -fx-background-color: -enigma-gold;
+    -fx-text-fill: -enigma-background;
+    -fx-font-weight: bold;
+}
+
+.plugboard-socket:pending {
+    -fx-border-color: -enigma-gold-bright;
+    -fx-border-width: 2;
+    -fx-text-fill: -enigma-gold-bright;
+    -fx-font-weight: bold;
+}
+
+.plugboard-connections {
+    -fx-font-family: "Consolas", monospace;
+}
+
+.plugboard-warning {
+    -fx-text-fill: -enigma-gold-bright;
+}
+
+.settings-status {
+    -fx-text-fill: -enigma-gold-bright;
+}
+
 .button:disabled {
     -fx-opacity: 0.45;
 }

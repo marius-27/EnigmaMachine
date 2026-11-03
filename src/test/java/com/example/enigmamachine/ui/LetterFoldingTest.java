@@ -21,8 +21,13 @@ class LetterFoldingTest {
     }
 
     @Test
+    void spaceBecomesTheHistoricalWordSeparator() {
+        assertFolds(" ", 'X');
+    }
+
+    @Test
     void charactersWithoutAnEnigmaLetterAreRejected() {
-        for (char typed : "7 @€фß".toCharArray()) {
+        for (char typed : "7@€фß".toCharArray()) {
             assertEquals(Optional.empty(), LetterFolding.toLetter(typed), "Typed: " + typed);
         }
     }

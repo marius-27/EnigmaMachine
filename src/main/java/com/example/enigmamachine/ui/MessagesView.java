@@ -26,8 +26,13 @@ public final class MessagesView extends VBox {
         TextArea input = messageArea(viewModel.inputTextProperty());
         TextArea output = messageArea(viewModel.outputTextProperty());
 
+        Button decrypt = action(
+                "Decrypt", "Run the output back through the machine from where the message began.", controller::decrypt);
+        decrypt.disableProperty().bind(viewModel.outputTextProperty().isEmpty());
+
         HBox actions = new HBox(SPACING,
-                action("Clear", "Empty the messages; the rotors stay where they are.", controller::clear),
+                decrypt,
+                action("Clear","Empty the messages; the rotors stay where they are.", controller::clear),
                 action("Reset", "Empty the messages and restore the initial rotor positions.", controller::reset));
         actions.setAlignment(Pos.CENTER_RIGHT);
 
@@ -39,9 +44,17 @@ public final class MessagesView extends VBox {
         area.getStyleClass().add("message-area");
         area.setEditable(false);
         area.setWrapText(true);
-        area.textProperty().bind(text);
-        // The text changes from outside the control, which would otherwise not follow the newest letters.
-        area.textProperty().addListener((observable, previous, current) -> area.setScrollTop(Double.MAX_VALUE));
+        area.setText(text.getValue());
+        // Replacing the whole text would send the view back to the top on every letter, so only the change is applied.
+        text.addListener((observable, previous, current) -> {
+            if (current.startsWith(previous)) {
+                area.appendText(current.substring(previous.length()));
+            } else if (previous.startsWith(current)) {
+                area.deleteText(current.length(), previous.length());
+            } else {
+                area.setText(current);
+            }
+        });
         VBox.setVgrow(area, Priority.ALWAYS);
         return area;
     }

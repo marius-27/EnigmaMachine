@@ -31,15 +31,26 @@ public final class MachineViewModel {
         rotorWindows.set(windows);
     }
 
-    public void appendLetters(char input, char output) {
+    public void appendLetters(String input, String output) {
         inputText.set(inputText.get() + input);
         outputText.set(outputText.get() + output);
-        litLamp.set(String.valueOf(output));
+        litLamp.set(output.substring(output.length() - 1));
+    }
+
+    public void removeLastLetters() {
+        inputText.set(withoutLastLetter(inputText.get()));
+        outputText.set(withoutLastLetter(outputText.get()));
+        String output = outputText.get();
+        litLamp.set(output.isEmpty() ? "" : output.substring(output.length() - 1));
     }
 
     public void clearMessages() {
         inputText.set("");
         outputText.set("");
         litLamp.set("");
+    }
+
+    private static String withoutLastLetter(String text) {
+        return text.substring(0, text.length() - 1);
     }
 }

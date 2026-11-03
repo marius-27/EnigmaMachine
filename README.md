@@ -47,11 +47,21 @@ The engine simulates a three-rotor Enigma M3:
 
 - Only the letters A-Z are encrypted. Lowercase letters are treated as uppercase.
 - When encrypting a message, spaces, digits, punctuation and letters with diacritics are removed and do not step the rotors. They cannot be recovered after decryption.
-- In the desktop app, a typed letter with diacritics becomes its base letter (for example, a T with comma is typed as T). Other characters are ignored and do not step the rotors.
+- In the desktop app, a typed letter with diacritics becomes its base letter (for example, a T with comma is typed as T). Space is typed as X, the word separator historical operators used, so a decrypted message shows X between words. Other characters are ignored and do not step the rotors.
+- Backspace removes the last letter and returns the rotors to where they were before it, which the mechanical machine could not do. Letters already removed with Clear cannot be undone.
 
 ### Decryption
 
 Enigma is reciprocal: to decrypt, restore the initial settings and encrypt the ciphertext. Rotor positions change with every letter, so decrypting from already advanced positions produces the wrong text.
+
+In the desktop app there are two shortcuts:
+
+- **Decrypt** runs the current output back through the machine from where the message began.
+- **Ctrl+V** processes pasted text from the current rotor positions. To decrypt a received message, press Reset first and use the settings it was encrypted with. Spaces and line breaks in pasted text are skipped, so ciphertext written in groups of letters decrypts correctly.
+
+### Settings
+
+The Settings tab edits the rotors, start positions, ring settings, reflector and plugboard without touching the running machine. **Apply** starts the machine with them and empties the current message. **Reset** returns the rotors to the start positions of the applied settings.
 
 ### Limitations
 
