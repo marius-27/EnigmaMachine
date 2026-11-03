@@ -7,6 +7,7 @@ import com.example.enigmamachine.domain.MachineConfiguration;
 import com.example.enigmamachine.domain.Reflector;
 import com.example.enigmamachine.domain.RotorDefinition;
 import com.example.enigmamachine.engine.EnigmaService;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -18,11 +19,13 @@ import javafx.event.EventTarget;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -122,6 +125,31 @@ class MainViewInputTest {
             tap(scene, "ț", KeyCode.QUOTE);
 
             assertEquals("T", controller.viewModel().inputTextProperty().get());
+        });
+    }
+
+    @Test
+    void lettersStillWorkWhileASettingsSelectorIsTheTarget() {
+        onFxThread(() -> {
+            tap(view.lookup(".rotor-selector"), "h", KeyCode.H);
+
+            assertState("H", "I", "AAB");
+        });
+    }
+
+    @Test
+    void rotorSelectorsShowAndEditTheSettings() {
+        onFxThread(() -> {
+            List<ComboBox<?>> selectors = view.lookupAll(".rotor-selector").stream()
+                    .sorted(Comparator.comparing(GridPane::getRowIndex))
+                    .<ComboBox<?>>map(selector -> (ComboBox<?>) selector)
+                    .toList();
+            assertEquals(3, selectors.size());
+
+            controller.settings().rotorProperty(0).set(RotorDefinition.III);
+
+            assertEquals(RotorDefinition.III, selectors.get(0).getValue());
+            assertEquals(RotorDefinition.I, selectors.get(2).getValue());
         });
     }
 

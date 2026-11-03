@@ -6,10 +6,16 @@ import com.example.enigmamachine.domain.MachineConfiguration;
 
 public final class EnigmaService {
 
+    private final MachineConfiguration configuration;
     private final EnigmaMachine machine;
 
     public EnigmaService(MachineConfiguration configuration) {
+        this.configuration = configuration;
         this.machine = new EnigmaMachine(configuration);
+    }
+
+    public MachineConfiguration configuration() {
+        return configuration;
     }
 
     public char encrypt(char letter) {

@@ -3,20 +3,27 @@ package com.example.enigmamachine.ui;
 import com.example.enigmamachine.domain.Alphabet;
 import com.example.enigmamachine.engine.EnigmaService;
 import com.example.enigmamachine.ui.viewmodel.MachineViewModel;
+import com.example.enigmamachine.ui.viewmodel.SettingsViewModel;
 import java.util.Objects;
 
 public final class MainController {
 
     private final EnigmaService service;
     private final MachineViewModel viewModel = new MachineViewModel();
+    private final SettingsViewModel settings;
 
     public MainController(EnigmaService service) {
         this.service = Objects.requireNonNull(service, "Enigma service is required.");
+        this.settings = new SettingsViewModel(service.configuration());
         viewModel.showRotorWindows(service.rotorWindows());
     }
 
     public MachineViewModel viewModel() {
         return viewModel;
+    }
+
+    public SettingsViewModel settings() {
+        return settings;
     }
 
     public void pressKey(char key) {
