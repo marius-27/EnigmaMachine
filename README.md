@@ -63,6 +63,10 @@ In the desktop app there are two shortcuts:
 
 The Settings tab edits the rotors, start positions, ring settings, reflector and plugboard without touching the running machine. **Apply** starts the machine with them and empties the current message. **Reset** returns the rotors to the start positions of the applied settings.
 
+### Signal path
+
+The Signal tab replays the path of the last letter through every component, using the trace reported by the engine. **Play**, **Pause**, **Step** and the speed selector control the replay. In **Educational mode**, each new letter waits at its first step. The letter is already encrypted when the replay starts, so none of these controls can change the result.
+
 ### Limitations
 
 - Rotors VI, VII and VIII are not supported.

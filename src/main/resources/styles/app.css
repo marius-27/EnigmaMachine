@@ -197,6 +197,10 @@
     -fx-font-weight: bold;
 }
 
+.signal-educational {
+    -fx-text-fill: -enigma-text;
+}
+
 .signal-letters {
     -fx-font-family: "Consolas", monospace;
 }

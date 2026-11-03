@@ -70,6 +70,43 @@ class SignalPlaybackTest {
         assertFalse(playback.advance());
     }
 
+    @Test
+    void canAdvanceUntilTheLastStep() {
+        assertFalse(playback.canAdvanceProperty().get());
+
+        SignalTrace trace = machine.encryptTraced('A');
+        playback.show(trace);
+        assertTrue(playback.canAdvanceProperty().get());
+
+        for (int step = 1; step < trace.steps().size(); step++) {
+            assertTrue(playback.canAdvanceProperty().get());
+            playback.advance();
+        }
+        assertFalse(playback.canAdvanceProperty().get());
+
+        playback.show(null);
+        assertFalse(playback.canAdvanceProperty().get());
+    }
+
+    @Test
+    void restartGoesBackToTheFirstStep() {
+        SignalTrace trace = machine.encryptTraced('A');
+        playback.show(trace);
+        trace.steps().forEach(step -> playback.advance());
+
+        playback.restart();
+
+        assertEquals(0, active());
+        assertTrue(playback.canAdvanceProperty().get());
+    }
+
+    @Test
+    void restartWithoutATraceDoesNothing() {
+        playback.restart();
+
+        assertEquals(SignalPlayback.NO_STEP, active());
+    }
+
     private int active() {
         return playback.activeStepProperty().get();
     }
