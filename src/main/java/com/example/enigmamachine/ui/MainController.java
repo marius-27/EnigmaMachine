@@ -29,6 +29,12 @@ public final class MainController {
         viewModel.showRotorWindows(service.rotorWindows());
     }
 
+    /** Empties the message panels and turns the lamp off; the rotors stay where they are. */
+    public void clear() {
+        viewModel.clearMessages();
+    }
+
+    /** Does what {@link #clear()} does and also returns the rotors to their initial positions. */
     public void reset() {
         service.reset();
         viewModel.clearMessages();

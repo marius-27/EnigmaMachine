@@ -5,24 +5,28 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 public final class MainView extends BorderPane {
 
     private static final double SPACING = 12;
     private static final double MESSAGES_WIDTH = 320;
 
+    private final KeyboardView keyboardView = new KeyboardView();
+
     public MainView(MainController controller) {
         Label rotorWindows = new Label();
         rotorWindows.getStyleClass().add("rotor-windows");
         rotorWindows.textProperty().bind(controller.viewModel().rotorWindowsProperty());
 
+        keyboardView.setOnLetterPressed(controller::pressKey);
+
         TitledPane rotors = section("Rotors", rotorWindows);
-        TitledPane lampboard = section("Lampboard", new Pane());
-        TitledPane keyboard = section("Keyboard", new Pane());
-        TitledPane messages = section("Messages", new Pane());
+        TitledPane lampboard = section("Lampboard", new LampboardView(controller.viewModel().litLampProperty()));
+        TitledPane keyboard = section("Keyboard", keyboardView);
+        TitledPane messages = section("Messages", new MessagesView(controller));
 
         VBox machine = new VBox(SPACING, rotors, lampboard, keyboard);
         VBox.setVgrow(lampboard, Priority.ALWAYS);
@@ -34,6 +38,11 @@ public final class MainView extends BorderPane {
         setCenter(machine);
         setRight(messages);
         setPadding(new Insets(SPACING));
+    }
+
+    /** Connects the physical keyboard; call after the stage has its scene. */
+    public void attachTo(Stage stage) {
+        keyboardView.attachTo(stage);
     }
 
     private static TitledPane section(String title, Node content) {
