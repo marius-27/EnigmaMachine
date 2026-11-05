@@ -174,7 +174,8 @@
 }
 
 .settings-status,
-.settings-file-message {
+.settings-message,
+.message-status {
     -fx-text-fill: -enigma-gold-bright;
 }
 

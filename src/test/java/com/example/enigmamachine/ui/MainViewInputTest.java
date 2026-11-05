@@ -559,13 +559,13 @@ class MainViewInputTest {
     }
 
     @Test
-    void fileMessageIsShownInTheSettings() {
+    void settingsMessageIsShownInTheSettings() {
         onFxThread(() -> {
-            Label message = (Label) view.lookup(".settings-file-message");
+            Label message = (Label) view.lookup(".settings-message");
             assertEquals("", message.getText());
             assertFalse(message.isManaged());
 
-            controller.settings().showFileMessage("Saved machine.json.");
+            controller.settings().showMessage("Saved machine.json.");
 
             assertEquals("Saved machine.json.", message.getText());
             assertTrue(message.isManaged());
@@ -618,6 +618,39 @@ class MainViewInputTest {
             tap(scene, "h", KeyCode.H);
 
             assertFalse(decrypt.isDisabled());
+        });
+    }
+
+    @Test
+    void clearAndResetAreAvailableOnlyWhenTheyWouldChangeSomething() {
+        onFxThread(() -> {
+            Button clear = buttonLabeled("Clear");
+            Button reset = buttonLabeled("Reset");
+            assertTrue(clear.isDisabled());
+            assertTrue(reset.isDisabled());
+
+            tap(scene, "h", KeyCode.H);
+            assertFalse(clear.isDisabled());
+            assertFalse(reset.isDisabled());
+
+            clear.fire();
+            assertTrue(clear.isDisabled());
+            assertFalse(reset.isDisabled(), "The rotors have still left their start.");
+
+            reset.fire();
+            assertTrue(reset.isDisabled());
+        });
+    }
+
+    @Test
+    void messageStatusIsShownNextToTheActions() {
+        onFxThread(() -> {
+            Label status = (Label) view.lookup(".message-status");
+            tap(scene, "h", KeyCode.H);
+
+            buttonLabeled("Reset").fire();
+
+            assertEquals("Reset. The rotors are back at AAA.", status.getText());
         });
     }
 

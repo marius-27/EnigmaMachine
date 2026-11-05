@@ -1,8 +1,10 @@
 package com.example.enigmamachine.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.example.enigmamachine.domain.Alphabet;
 import com.example.enigmamachine.domain.EnigmaMachine;
@@ -541,6 +543,76 @@ class MainControllerTest {
         controller.pasteText(" 7! ");
 
         assertEquals(trace, viewModel.lastTraceProperty().get());
+    }
+
+    @Test
+    void resetIsOfferedOnlyWhenItWouldChangeSomething() {
+        assertFalse(viewModel.resettableProperty().get());
+
+        controller.pressKey('A');
+        assertTrue(viewModel.resettableProperty().get());
+
+        controller.deleteLastLetter();
+        assertFalse(viewModel.resettableProperty().get());
+
+        controller.pressKey('A');
+        controller.clear();
+        assertTrue(viewModel.resettableProperty().get(), "The rotors have left their start.");
+
+        controller.reset();
+        assertFalse(viewModel.resettableProperty().get());
+    }
+
+    @Test
+    void applyingSettingsThatStartMidMessageLeavesNothingToReset() {
+        controller.pressKey('A');
+
+        applyMidMessageSettings();
+
+        assertFalse(viewModel.resettableProperty().get());
+    }
+
+    @Test
+    void actionsOnTheMessageAreReported() {
+        controller.pressKey('A');
+        controller.pressKey('B');
+
+        controller.decrypt();
+        assertEquals("Decrypted 2 letters.", viewModel.statusProperty().get());
+
+        controller.clear();
+        assertEquals("Message cleared. The rotors stay at AAC.", viewModel.statusProperty().get());
+
+        controller.reset();
+        assertEquals("Reset. The rotors are back at AAA.", viewModel.statusProperty().get());
+    }
+
+    @Test
+    void typingOrDeletingHidesTheLastReport() {
+        controller.pressKey('A');
+        controller.clear();
+
+        controller.pressKey('A');
+        assertEquals("", viewModel.statusProperty().get());
+
+        controller.reset();
+        controller.pressKey('A');
+        controller.deleteLastLetter();
+        assertEquals("", viewModel.statusProperty().get());
+    }
+
+    @Test
+    void pasteWithoutLettersIsReported() {
+        controller.pasteText(" 7! ");
+
+        assertEquals("The pasted text has no letters to encrypt.", viewModel.statusProperty().get());
+    }
+
+    @Test
+    void decryptOfAnEmptyMessageReportsNothing() {
+        controller.decrypt();
+
+        assertEquals("", viewModel.statusProperty().get());
     }
 
     private void applyMidMessageSettings() {

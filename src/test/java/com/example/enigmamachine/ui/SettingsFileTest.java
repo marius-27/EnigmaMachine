@@ -113,10 +113,10 @@ class SettingsFileTest {
         Path file = folder.resolve("machine.json");
 
         controller.saveSettings(file);
-        assertEquals("Saved machine.json.", settings.fileMessageProperty().get());
+        assertEquals("Saved machine.json.", settings.messageProperty().get());
 
         controller.loadSettings(file);
-        assertEquals("Loaded machine.json.", settings.fileMessageProperty().get());
+        assertEquals("Loaded machine.json. Apply to use these settings.", settings.messageProperty().get());
     }
 
     @Test
@@ -126,7 +126,7 @@ class SettingsFileTest {
 
         controller.loadSettings(file);
 
-        assertEquals("notes.json is not a valid Enigma configuration file.", settings.fileMessageProperty().get());
+        assertEquals("notes.json is not a valid Enigma configuration file.", settings.messageProperty().get());
         assertEquals(SAVED, settings.toConfiguration());
     }
 
@@ -136,7 +136,7 @@ class SettingsFileTest {
 
         controller.loadSettings(folder.resolve("absent.json"));
 
-        assertEquals("The file absent.json does not exist.", settings.fileMessageProperty().get());
+        assertEquals("The file absent.json does not exist.", settings.messageProperty().get());
         assertEquals(SAVED, settings.toConfiguration());
     }
 
@@ -144,6 +144,6 @@ class SettingsFileTest {
     void failedSaveIsReported() {
         controller.saveSettings(folder.resolve("missing-folder").resolve("machine.json"));
 
-        assertTrue(settings.fileMessageProperty().get().startsWith("Could not save machine.json"));
+        assertTrue(settings.messageProperty().get().startsWith("Could not save machine.json"));
     }
 }

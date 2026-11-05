@@ -71,13 +71,13 @@ public final class SettingsView extends GridPane {
                         .then("Changes are not applied yet.")
                         .otherwise("Applying empties the current message.")));
 
-        Label fileMessage = new Label();
-        fileMessage.getStyleClass().add("settings-file-message");
-        fileMessage.setWrapText(true);
-        fileMessage.textProperty().bind(controller.settings().fileMessageProperty());
-        fileMessage.managedProperty().bind(fileMessage.textProperty().isNotEmpty());
+        Label message = new Label();
+        message.getStyleClass().add("settings-message");
+        message.setWrapText(true);
+        message.textProperty().bind(controller.settings().messageProperty());
+        message.managedProperty().bind(message.textProperty().isNotEmpty());
 
-        return new VBox(SPACING, new HBox(SPACING, apply, save, load), status, fileMessage);
+        return new VBox(SPACING, new HBox(SPACING, apply, save, load), status, message);
     }
 
     private static Button action(String title, String styleClass, Runnable handler) {

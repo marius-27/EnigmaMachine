@@ -56,6 +56,11 @@ public final class EnigmaService {
         positionsBeforeLetters.clear();
     }
 
+    /** True while the rotors are at the start positions of the current settings. */
+    public boolean atStartPositions() {
+        return machine.positions().equals(configuration.positions());
+    }
+
     public void reset() {
         machine.reset();
         positionsBeforeLetters.clear();

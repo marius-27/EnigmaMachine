@@ -30,10 +30,20 @@ public final class MessagesView extends VBox {
                 "Decrypt", "Run the output back through the machine from where the message began.", controller::decrypt);
         decrypt.disableProperty().bind(viewModel.outputTextProperty().isEmpty());
 
-        HBox actions = new HBox(SPACING,
-                decrypt,
-                action("Clear","Empty the messages; the rotors stay where they are.", controller::clear),
-                action("Reset", "Empty the messages and restore the initial rotor positions.", controller::reset));
+        Button clear = action("Clear", "Empty the messages; the rotors stay where they are.", controller::clear);
+        clear.disableProperty().bind(viewModel.inputTextProperty().isEmpty());
+        Button reset = action(
+                "Reset", "Empty the messages and restore the initial rotor positions.", controller::reset);
+        reset.disableProperty().bind(viewModel.resettableProperty().not());
+
+        Label status = new Label();
+        status.getStyleClass().add("message-status");
+        status.setWrapText(true);
+        status.setMaxWidth(Double.MAX_VALUE);
+        status.textProperty().bind(viewModel.statusProperty());
+        HBox.setHgrow(status, Priority.ALWAYS);
+
+        HBox actions = new HBox(SPACING, status, decrypt, clear, reset);
         actions.setAlignment(Pos.CENTER_RIGHT);
 
         getChildren().addAll(new Label("Input"), input, new Label("Output"), output, actions);
