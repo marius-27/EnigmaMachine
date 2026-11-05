@@ -12,7 +12,9 @@ https://www.youtube.com/watch?v=sbm2dmkmqgQ
 Capitolele publicate includ Keyboard, Plugboard, Rotors, Reflector si
 Enciphering a letter. Descrierea si capitolele au fost consultate;
 aspectul exact al cadrelor nu a fost verificat vizual. Compozitia de mai jos
-este o propunere, de comparat cu un cadru ales din videoclip in etapa 01.
+este specificatia aleasa, inspirata de capitolul de la 24:08.
+Referinta aleasa la delegarea utilizatorului: 24:08 - Enciphering a letter.
+Nu se afirma reproducerea exacta a unui cadru neverificat vizual.
 
 Branch propus: feature/12-diagram-interface
 Baza: origin/develop actualizat, dupa integrarea etapei 11.
@@ -65,10 +67,11 @@ Arhitectura
 Etapa 01 - Referinta vizuala
 ---------------------------
 Commit 50: docs: specify diagram interface layout and mode behavior
-[ ] Alegem cadrul/minutul de referinta si verificam compozitia dorita.
+[x] Referinta aleasa: 24:08 - Enciphering a letter; compozitie definita in specificatie.
 [x] Schita statica: docs/diagram-interface-layout.svg; specificatie: docs/diagram-interface.md.
-[ ] Confirmam ca prioritatea este diagrama componentelor din videoclip.
-Gata cand: exista o referinta vizuala concreta pentru comparatie.
+[x] Prioritate aleasa prin delegare: diagrama completa a componentelor si traseul semnalului.
+Status: ETAPA 01 FINALIZATA - specificatie si schita; fidelitatea exacta
+fata de cadrele video nu a fost verificata. Etapele 02-06 nu sunt implementate.
 
 Etapa 02 - Comutare si input comun
 ---------------------------------

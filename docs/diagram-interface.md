@@ -7,14 +7,16 @@ This document specifies the second interface; it does not implement it.
 ## Reference and visual target
 
 Inspiration: Coding Cassowary, [Coding the Enigma machine - Part 1](https://www.youtube.com/watch?v=sbm2dmkmqgQ).
-The published chapters cover the keyboard, plugboard, rotors, reflector and
-enciphering a letter. The exact reference frame and visual comparison remain
-pending the user's timestamp or screenshot. The proposed composition below is
-a design draft, not a verified reproduction of a video frame.
+Selected reference: [24:08 — Enciphering a letter](https://www.youtube.com/watch?v=sbm2dmkmqgQ&t=1448s).
+The user delegated selection of the reference. This section was selected because
+it covers a complete letter traversal rather than an isolated component.
+The design target is the full component diagram described below. Video frames
+could not be inspected directly; this is an independently specified layout
+inspired by that section, not a verified reproduction of its exact appearance.
 
 The target is a component diagram with visible contacts and wires. The
 existing machine interface is called **Classic**, and the new view **Diagram**.
-See [the static layout draft](diagram-interface-layout.svg).
+See [the selected static layout](diagram-interface-layout.svg).
 
 ## Layout
 
@@ -38,7 +40,7 @@ lampboard remain below the diagram. At the existing minimum window size of
 860 by 600, the diagram may scroll; contacts remain readable and Mode stays
 visible. Do not fit all 26 contacts by shrinking the lettering below 12 px.
 
-## Colour and motion draft
+## Colour and motion specification
 
 | Element | Proposed colour | Additional cue |
 |---|---|---|
@@ -89,7 +91,11 @@ must use existing domain transforms rather than formulas copied into the UI.
 - [x] Specify layout, component order, colour draft and control placement.
 - [x] Produce a static layout draft.
 - [x] Specify Mode behaviour and state preservation.
-- [ ] Select the exact video frame with the user and compare the composition.
-- [ ] Confirm the diagram composition before implementing stage 2.
+- [x] Select the reference section: 24:08, “Enciphering a letter”, under delegated design choice.
+- [x] Define the implementation composition in the static layout and this specification.
+
+Stage 1 is complete as a design specification. Exact visual fidelity to the
+video has not been verified and is not claimed by this checklist. Stages 2–6
+remain unimplemented.
 
 No application code, dependencies or encryption behaviour change in this stage.

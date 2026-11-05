@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1100" height="760" viewBox="0 0 1100 760">
   <title>Enigma Diagram mode — proposed layout</title>
-  <desc>Draft layout awaiting an exact video reference. The signal travels from the right through the plugboard and three rotors to the reflector, then returns.</desc>
+  <desc>Selected layout inspired by the Enciphering a letter section at 24:08. Exact video appearance is unverified. The signal travels from the right through the plugboard and three rotors to the reflector, then returns.</desc>
   <style>text{font-family:Arial,sans-serif;fill:#f3f4f6;font-size:15px}.panel{fill:#202731;stroke:#657080}.muted{fill:#b5bfcc}.small{font-size:12px}</style>
   <rect width="1100" height="760" fill="#15191f"/>
   <text x="24" y="34" font-size="22">ENIGMA M3 · Diagram</text>
   <rect class="panel" x="966" y="12" width="110" height="34" rx="6"/><text x="1001" y="34">Mode</text>
-  <text x="24" y="68" class="muted">LAYOUT DRAFT · Exact video frame pending · Illustrative paths only</text>
+  <text x="24" y="68" class="muted">STAGE 1 · Reference: 24:08, Enciphering a letter · Illustrative paths only</text>
   <g class="panel">
     <rect x="24" y="88" width="100" height="350" rx="6"/>
     <rect x="152" y="88" width="130" height="350" rx="6"/>
