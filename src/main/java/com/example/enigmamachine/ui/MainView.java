@@ -56,10 +56,6 @@ public final class MainView extends BorderPane {
         shortcuts.installOn(stage.getScene());
     }
 
-    Shortcuts shortcuts() {
-        return shortcuts;
-    }
-
     private static Tab tab(String title, Node content) {
         Tab tab = new Tab(title, content);
         tab.setClosable(false);

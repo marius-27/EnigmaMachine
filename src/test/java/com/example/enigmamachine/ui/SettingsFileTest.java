@@ -95,6 +95,18 @@ class SettingsFileTest {
     }
 
     @Test
+    void incompleteSettingsAreReportedInsteadOfSaved() {
+        Path file = folder.resolve("machine.json");
+        settings.reflectorProperty().set(null);
+
+        controller.saveSettings(file);
+
+        assertTrue(settings.messageProperty().get().startsWith("Cannot save these settings: "),
+                settings.messageProperty().get());
+        assertFalse(Files.exists(file));
+    }
+
+    @Test
     void loadedSettingsRunTheMachineAfterApply() {
         Path file = folder.resolve("machine.json");
         settings.load(SAVED);
