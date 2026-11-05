@@ -6,6 +6,7 @@ import com.example.enigmamachine.domain.RotorDefinition;
 import com.example.enigmamachine.engine.EnigmaService;
 import com.example.enigmamachine.ui.MainController;
 import com.example.enigmamachine.ui.MainView;
+import com.example.enigmamachine.ui.UnexpectedErrorHandler;
 import java.util.List;
 import java.util.Objects;
 import javafx.application.Application;
@@ -17,7 +18,7 @@ public class App extends Application {
     private static final String STYLESHEET = "/styles/app.css";
     private static final double WIDTH = 1100;
     private static final double HEIGHT = 760;
-    private static final double MIN_WIDTH = 820;
+    private static final double MIN_WIDTH = 860;
     private static final double MIN_HEIGHT = 600;
     private static final MachineConfiguration DEFAULT_CONFIGURATION = new MachineConfiguration(
             List.of(RotorDefinition.I, RotorDefinition.II, RotorDefinition.III),
@@ -34,6 +35,7 @@ public class App extends Application {
         Scene scene = new Scene(view, WIDTH, HEIGHT);
         scene.getStylesheets().add(Objects.requireNonNull(App.class.getResource(STYLESHEET)).toExternalForm());
 
+        Thread.setDefaultUncaughtExceptionHandler(new UnexpectedErrorHandler(stage));
         stage.setTitle("Enigma M3");
         stage.setScene(scene);
         view.attachTo(stage);

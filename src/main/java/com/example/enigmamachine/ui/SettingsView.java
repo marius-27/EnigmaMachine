@@ -4,6 +4,7 @@ import com.example.enigmamachine.domain.Alphabet;
 import com.example.enigmamachine.domain.Reflector;
 import com.example.enigmamachine.domain.RotorDefinition;
 import com.example.enigmamachine.ui.viewmodel.SettingsViewModel;
+import java.io.File;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -11,11 +12,15 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.Property;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
 
 /**
@@ -26,8 +31,11 @@ public final class SettingsView extends GridPane {
     private static final double SPACING = 8;
     private static final List<String> ROTOR_SLOTS = List.of("Left", "Middle", "Right");
     private static final List<Integer> ALPHABET_INDEXES = IntStream.range(0, Alphabet.SIZE).boxed().toList();
+    private static final String DEFAULT_FILE_NAME = "enigma-settings.json";
 
-    public SettingsView(MainController controller) {
+    private File lastFolder;
+
+    public SettingsView(MainController controller, Shortcuts shortcuts) {
         SettingsViewModel settings = controller.settings();
         setHgap(SPACING);
         setVgap(SPACING);
@@ -35,26 +43,34 @@ public final class SettingsView extends GridPane {
 
         addRow(0, new Label(), new Label("Rotor"), new Label("Start"), new Label("Ring"));
         for (int slot = 0; slot < settings.rotorSlots(); slot++) {
-            addRow(slot + 1, new Label(ROTOR_SLOTS.get(slot)),
-                    selector("rotor-selector", List.of(RotorDefinition.values()), settings.rotorProperty(slot), String::valueOf),
-                    selector("position-selector", ALPHABET_INDEXES, settings.positionProperty(slot), SettingsView::positionLabel),
-                    selector("ring-selector", ALPHABET_INDEXES, settings.ringSettingProperty(slot), SettingsView::ringLabel));
+            String name = ROTOR_SLOTS.get(slot);
+            addRow(slot + 1, new Label(name),
+                    named(name + " rotor", selector(
+                            "rotor-selector", List.of(RotorDefinition.values()), settings.rotorProperty(slot), String::valueOf)),
+                    named(name + " rotor start position", selector(
+                            "position-selector", ALPHABET_INDEXES, settings.positionProperty(slot), SettingsView::positionLabel)),
+                    named(name + " rotor ring setting", selector(
+                            "ring-selector", ALPHABET_INDEXES, settings.ringSettingProperty(slot), SettingsView::ringLabel)));
         }
-        addRow(settings.rotorSlots() + 1, new Label("Reflector"),
-                selector("reflector-selector", List.of(Reflector.values()), settings.reflectorProperty(), String::valueOf));
+        addRow(settings.rotorSlots() + 1, new Label("Reflector"), named("Reflector", selector(
+                "reflector-selector", List.of(Reflector.values()), settings.reflectorProperty(), String::valueOf)));
         add(new PlugboardView(settings), 0, settings.rotorSlots() + 2, 4, 1);
-        add(applySection(controller), 0, settings.rotorSlots() + 3, 4, 1);
+        add(applySection(controller, shortcuts), 0, settings.rotorSlots() + 3, 4, 1);
     }
 
-    private static VBox applySection(MainController controller) {
+    private VBox applySection(MainController controller, Shortcuts shortcuts) {
         BooleanBinding unapplied = controller.settings().unappliedChangesBinding();
 
-        Button apply = new Button("Apply");
-        apply.getStyleClass().add("apply-settings");
-        // A focused button would fire on Space while a message is being typed.
-        apply.setFocusTraversable(false);
+        Button apply = action("Apply", "apply-settings", controller::applySettings);
+        apply.setTooltip(new Tooltip("Start the machine with these settings."));
         apply.disableProperty().bind(unapplied.not());
-        apply.setOnAction(event -> controller.applySettings());
+        Button save = action("Save…", "save-settings", () -> chooseFileToSave(controller));
+        save.setTooltip(new Tooltip("Save these settings to a file."));
+        Button load = action("Load…", "load-settings", () -> chooseFileToLoad(controller));
+        load.setTooltip(new Tooltip("Fill the settings from a file."));
+        shortcuts.add("Shortcut+Enter", apply);
+        shortcuts.add("Shortcut+S", save);
+        shortcuts.add("Shortcut+O", load);
 
         Label status = new Label();
         status.getStyleClass().add("settings-status");
@@ -67,7 +83,57 @@ public final class SettingsView extends GridPane {
                         .then("Changes are not applied yet.")
                         .otherwise("Applying empties the current message.")));
 
-        return new VBox(SPACING, apply, status);
+        Label message = new Label();
+        message.getStyleClass().add("settings-message");
+        message.setWrapText(true);
+        message.textProperty().bind(controller.settings().messageProperty());
+        message.managedProperty().bind(message.textProperty().isNotEmpty());
+
+        return new VBox(SPACING, new HBox(SPACING, apply, save, load), status, message);
+    }
+
+    /** The column headers are not linked to the selectors, so each one carries its full name for screen readers. */
+    private static <T extends Node> T named(String name, T control) {
+        control.setAccessibleText(name);
+        return control;
+    }
+
+    private static Button action(String title, String styleClass, Runnable handler) {
+        Button button = new Button(title);
+        button.getStyleClass().add(styleClass);
+        // A focused button would fire on Space while a message is being typed.
+        button.setFocusTraversable(false);
+        button.setOnAction(event -> handler.run());
+        return button;
+    }
+
+    /** The system dialog asks for confirmation itself before a file is overwritten. */
+    private void chooseFileToSave(MainController controller) {
+        FileChooser chooser = fileChooser("Save settings");
+        chooser.setInitialFileName(DEFAULT_FILE_NAME);
+        File file = chooser.showSaveDialog(getScene().getWindow());
+        if (file != null) {
+            lastFolder = file.getParentFile();
+            controller.saveSettings(file.toPath());
+        }
+    }
+
+    private void chooseFileToLoad(MainController controller) {
+        File file = fileChooser("Load settings").showOpenDialog(getScene().getWindow());
+        if (file != null) {
+            lastFolder = file.getParentFile();
+            controller.loadSettings(file.toPath());
+        }
+    }
+
+    private FileChooser fileChooser(String title) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(title);
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Enigma settings (*.json)", "*.json"));
+        if (lastFolder != null && lastFolder.isDirectory()) {
+            chooser.setInitialDirectory(lastFolder);
+        }
+        return chooser;
     }
 
     private static String positionLabel(int index) {
@@ -79,7 +145,7 @@ public final class SettingsView extends GridPane {
         return String.format("%02d", index + 1);
     }
 
-    private static <T> ComboBox<T> selector(
+    static <T> ComboBox<T> selector(
             String styleClass, List<T> choices, Property<T> value, Function<T, String> label) {
         ComboBox<T> selector = new ComboBox<>();
         selector.getItems().setAll(choices);

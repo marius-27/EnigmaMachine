@@ -2,6 +2,7 @@ package com.example.enigmamachine.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -24,9 +25,12 @@ import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -34,6 +38,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -326,6 +331,251 @@ class MainViewInputTest {
     }
 
     @Test
+    void rotorWindowsShowTheRealPositionsFromTheFirstMomentOfTheAnimation() {
+        onFxThread(() -> {
+            assertEquals("AAA", shownRotorLetters());
+
+            tap(scene, "h", KeyCode.H);
+            assertEquals("AAB", shownRotorLetters());
+
+            tap(scene, "e", KeyCode.E);
+            assertEquals("AAC", shownRotorLetters());
+        });
+    }
+
+    @Test
+    void rotorWindowsFollowTheEngineThroughADoubleStep() {
+        onFxThread(() -> {
+            integerSelectorInRow(".position-selector", 2).setValue(3);
+            integerSelectorInRow(".position-selector", 3).setValue(20);
+            ((Button) view.lookup(".apply-settings")).fire();
+            assertEquals("ADU", shownRotorLetters());
+
+            tap(scene, "a", KeyCode.A);
+            assertEquals(controller.viewModel().rotorWindowsProperty().get(), shownRotorLetters());
+            tap(scene, "a", KeyCode.A);
+            assertEquals(controller.viewModel().rotorWindowsProperty().get(), shownRotorLetters());
+            tap(scene, "b", KeyCode.B);
+            assertEquals("BFX", shownRotorLetters());
+        });
+    }
+
+    @Test
+    void rotorWindowsFollowBackspaceResetAndLongPastes() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+            tap(scene, "i", KeyCode.I);
+
+            tap(scene, "", KeyCode.BACK_SPACE);
+            assertEquals("AAB", shownRotorLetters());
+
+            controller.pasteText("A".repeat(30));
+            assertEquals(controller.viewModel().rotorWindowsProperty().get(), shownRotorLetters());
+
+            controller.reset();
+            assertEquals("AAA", shownRotorLetters());
+        });
+    }
+
+    private String shownRotorLetters() {
+        StringBuilder letters = new StringBuilder();
+        for (Node window : ((Pane) view.lookup(".rotor-windows")).getChildren()) {
+            letters.append(((Label) window.lookup(".rotor-window-current")).getText());
+        }
+        return letters.toString();
+    }
+
+    @Test
+    void signalPathStartsEmptyAndRevealsOnlyTheFirstStep() {
+        onFxThread(() -> {
+            assertEquals(9, view.lookupAll(".signal-step").size());
+            assertEquals("Press a key to see its signal path.", ((Label) view.lookup(".signal-summary")).getText());
+
+            tap(scene, "h", KeyCode.H);
+
+            assertEquals("H → I, rotors at AAB", ((Label) view.lookup(".signal-summary")).getText());
+            long active = view.lookupAll(".signal-step").stream().filter(row -> hasState(row, "active")).count();
+            long revealed = view.lookupAll(".signal-letters").stream().filter(Node::isVisible).count();
+            assertEquals(1, active);
+            assertEquals(1, revealed);
+        });
+    }
+
+    @Test
+    void signalPathEmptiesWhenTheMessageIsCleared() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            controller.clear();
+
+            assertEquals("Press a key to see its signal path.", ((Label) view.lookup(".signal-summary")).getText());
+            assertEquals(0, view.lookupAll(".signal-step").stream().filter(row -> hasState(row, "active")).count());
+        });
+    }
+
+    @Test
+    void signalControlsAreOffWithoutALetter() {
+        onFxThread(() -> {
+            assertTrue(signalButton(".signal-play").isDisabled());
+            assertTrue(signalButton(".signal-step-button").isDisabled());
+            assertEquals("Play", signalButton(".signal-play").getText());
+        });
+    }
+
+    @Test
+    void letterPlaysOnItsOwnOutsideEducationalMode() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            assertEquals("Pause", signalButton(".signal-play").getText());
+        });
+    }
+
+    @Test
+    void educationalModeWaitsAtTheFirstStep() {
+        onFxThread(() -> {
+            educationalMode().setSelected(true);
+
+            tap(scene, "h", KeyCode.H);
+
+            assertEquals("Play", signalButton(".signal-play").getText());
+            assertEquals(1, revealedSteps());
+        });
+    }
+
+    @Test
+    void stepMovesOneComponentAtATimeAndStopsAtTheLast() {
+        onFxThread(() -> {
+            educationalMode().setSelected(true);
+            tap(scene, "h", KeyCode.H);
+            Button step = signalButton(".signal-step-button");
+
+            step.fire();
+            assertEquals(2, revealedSteps());
+
+            for (int remaining = 0; remaining < 7; remaining++) {
+                step.fire();
+            }
+            assertEquals(9, revealedSteps());
+            assertTrue(step.isDisabled());
+        });
+    }
+
+    @Test
+    void playAfterTheLastStepStartsOver() {
+        onFxThread(() -> {
+            educationalMode().setSelected(true);
+            tap(scene, "h", KeyCode.H);
+            for (int step = 0; step < 8; step++) {
+                signalButton(".signal-step-button").fire();
+            }
+
+            signalButton(".signal-play").fire();
+
+            assertEquals(1, revealedSteps());
+            assertEquals("Pause", signalButton(".signal-play").getText());
+        });
+    }
+
+    @Test
+    void pauseAndStepStopThePlayback() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            signalButton(".signal-play").fire();
+            assertEquals("Play", signalButton(".signal-play").getText());
+
+            signalButton(".signal-play").fire();
+            assertEquals("Pause", signalButton(".signal-play").getText());
+
+            signalButton(".signal-step-button").fire();
+            assertEquals("Play", signalButton(".signal-play").getText());
+        });
+    }
+
+    @Test
+    void turningOnEducationalModeStopsThePlayback() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            educationalMode().setSelected(true);
+
+            assertEquals("Play", signalButton(".signal-play").getText());
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void speedSelectorChangesThePlaybackRate() {
+        onFxThread(() -> {
+            ComboBox<Double> speed = (ComboBox<Double>) view.lookup(".signal-speed");
+            SignalPathView signal = (SignalPathView) view.lookup(".signal-summary").getParent();
+            assertEquals(1.0, signal.playbackRate());
+            assertEquals("0.5×", speed.getConverter().toString(0.5));
+            assertEquals("4×", speed.getConverter().toString(4.0));
+
+            speed.setValue(4.0);
+
+            assertEquals(4.0, signal.playbackRate());
+        });
+    }
+
+    @Test
+    void controlsDoNotChangeTheEncryption() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+            signalButton(".signal-play").fire();
+            signalButton(".signal-step-button").fire();
+            signalButton(".signal-play").fire();
+            educationalMode().setSelected(true);
+            tap(scene, "e", KeyCode.E);
+            signalButton(".signal-step-button").fire();
+            tap(scene, "l", KeyCode.L);
+            tap(scene, "l", KeyCode.L);
+            tap(scene, "o", KeyCode.O);
+
+            assertState("HELLO", "ILBDA", "AAF");
+        });
+    }
+
+    private Button signalButton(String selector) {
+        return (Button) view.lookup(selector);
+    }
+
+    private CheckBox educationalMode() {
+        return (CheckBox) view.lookup(".signal-educational");
+    }
+
+    private long revealedSteps() {
+        return view.lookupAll(".signal-letters").stream().filter(Node::isVisible).count();
+    }
+
+    @Test
+    void fileActionsAreOfferedAndDoNotTakeTheFocus() {
+        onFxThread(() -> {
+            for (String action : List.of(".save-settings", ".load-settings")) {
+                Button button = (Button) view.lookup(action);
+                assertFalse(button.isDisabled());
+                assertFalse(button.isFocusTraversable());
+            }
+        });
+    }
+
+    @Test
+    void settingsMessageIsShownInTheSettings() {
+        onFxThread(() -> {
+            Label message = (Label) view.lookup(".settings-message");
+            assertEquals("", message.getText());
+            assertFalse(message.isManaged());
+
+            controller.settings().showMessage("Saved machine.json.");
+
+            assertEquals("Saved machine.json.", message.getText());
+            assertTrue(message.isManaged());
+        });
+    }
+
+    @Test
     void backspaceKeepsDeletingWhileHeld() {
         onFxThread(() -> {
             tap(scene, "h", KeyCode.H);
@@ -363,6 +613,94 @@ class MainViewInputTest {
     }
 
     @Test
+    void shortcutsRunTheMessageActionsWithoutTypingALetter() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            shortcut(KeyCode.D, "d");
+            assertState("I", "H", "AAB");
+
+            shortcut(KeyCode.R, "r");
+            assertState("", "", "AAA");
+        });
+    }
+
+    @Test
+    void shortcutOfADisabledButtonDoesNothing() {
+        onFxThread(() -> {
+            shortcut(KeyCode.D, "d");
+            shortcut(KeyCode.ENTER, "\r");
+
+            assertState("", "", "AAA");
+            assertEquals("", controller.viewModel().statusProperty().get());
+        });
+    }
+
+    @Test
+    void shortcutAppliesTheEditedSettings() {
+        onFxThread(() -> {
+            controller.settings().positionProperty(0).set(2);
+
+            shortcut(KeyCode.ENTER, "\r");
+
+            assertState("", "", "CAA");
+        });
+    }
+
+    @Test
+    void digitShortcutsSwitchTheSidePanelTabs() {
+        onFxThread(() -> {
+            TabPane tabs = (TabPane) view.lookup(".tab-pane");
+
+            shortcut(KeyCode.DIGIT2, "2");
+            assertEquals("Settings", tabs.getSelectionModel().getSelectedItem().getText());
+
+            shortcut(KeyCode.DIGIT3, "3");
+            assertEquals("Signal", tabs.getSelectionModel().getSelectedItem().getText());
+
+            shortcut(KeyCode.DIGIT1, "1");
+            assertEquals("Messages", tabs.getSelectionModel().getSelectedItem().getText());
+        });
+    }
+
+    @Test
+    void everyShortcutIsShownInItsButtonTooltip() {
+        onFxThread(() -> {
+            for (String title : List.of("Decrypt", "Clear", "Reset", "Apply", "Save…", "Load…", "Step")) {
+                Button button = buttonLabeled(title);
+                assertTrue(button.getTooltip().getText().contains("Shortcut: "), title);
+                assertEquals(button.getTooltip().getText(), button.getAccessibleHelp(), title);
+            }
+            assertTrue(educationalMode().getTooltip().getText().contains("Shortcut: "));
+        });
+    }
+
+    @Test
+    void settingsAndSignalPanelsScrollInsteadOfBeingCutOff() {
+        onFxThread(() -> {
+            TabPane tabs = (TabPane) view.lookup(".tab-pane");
+
+            assertInstanceOf(ScrollPane.class, tabs.getTabs().get(1).getContent());
+            assertInstanceOf(ScrollPane.class, tabs.getTabs().get(2).getContent());
+            assertFalse(tabs.getTabs().get(1).getContent().isFocusTraversable());
+        });
+    }
+
+    @Test
+    void lampsAndRotorWindowsAreDescribedForScreenReaders() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            List<String> descriptions = view.lookupAll(".lamp").stream().map(Node::getAccessibleText).toList();
+            assertTrue(descriptions.contains("Lamp I, lit"), descriptions.toString());
+            assertTrue(descriptions.contains("Lamp H"), descriptions.toString());
+
+            List<String> windows = view.lookupAll(".rotor-window").stream().map(Node::getAccessibleText).toList();
+            assertEquals(List.of("Left rotor at A", "Middle rotor at A", "Right rotor at B"), windows);
+        });
+    }
+
+    @Test
     void decryptIsAvailableOnlyWhenThereIsOutput() {
         onFxThread(() -> {
             Button decrypt = buttonLabeled("Decrypt");
@@ -371,6 +709,39 @@ class MainViewInputTest {
             tap(scene, "h", KeyCode.H);
 
             assertFalse(decrypt.isDisabled());
+        });
+    }
+
+    @Test
+    void clearAndResetAreAvailableOnlyWhenTheyWouldChangeSomething() {
+        onFxThread(() -> {
+            Button clear = buttonLabeled("Clear");
+            Button reset = buttonLabeled("Reset");
+            assertTrue(clear.isDisabled());
+            assertTrue(reset.isDisabled());
+
+            tap(scene, "h", KeyCode.H);
+            assertFalse(clear.isDisabled());
+            assertFalse(reset.isDisabled());
+
+            clear.fire();
+            assertTrue(clear.isDisabled());
+            assertFalse(reset.isDisabled(), "The rotors have still left their start.");
+
+            reset.fire();
+            assertTrue(reset.isDisabled());
+        });
+    }
+
+    @Test
+    void messageStatusIsShownNextToTheActions() {
+        onFxThread(() -> {
+            Label status = (Label) view.lookup(".message-status");
+            tap(scene, "h", KeyCode.H);
+
+            buttonLabeled("Reset").fire();
+
+            assertEquals("Reset. The rotors are back at AAA.", status.getText());
         });
     }
 
@@ -585,6 +956,13 @@ class MainViewInputTest {
                 false, false, false, false,
                 button == MouseButton.PRIMARY, false, button == MouseButton.SECONDARY,
                 false, false, true, new PickResult(target, 0, 0)));
+    }
+
+    /** Presses the key with Ctrl, or with Command on macOS, which is what "Shortcut" means there. */
+    private void shortcut(KeyCode code, String text) {
+        boolean mac = System.getProperty("os.name").startsWith("Mac");
+        fire(scene, new KeyEvent(KeyEvent.KEY_PRESSED, text, text, code, false, !mac, false, mac));
+        fire(scene, new KeyEvent(KeyEvent.KEY_RELEASED, "", "", code, false, !mac, false, mac));
     }
 
     private static void fire(EventTarget target, Event event) {

@@ -1,13 +1,17 @@
 package com.example.enigmamachine.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.example.enigmamachine.domain.Alphabet;
 import com.example.enigmamachine.domain.EnigmaMachine;
 import com.example.enigmamachine.domain.MachineConfiguration;
 import com.example.enigmamachine.domain.Reflector;
 import com.example.enigmamachine.domain.RotorDefinition;
+import com.example.enigmamachine.domain.SignalTrace;
 import com.example.enigmamachine.engine.EnigmaService;
 import com.example.enigmamachine.ui.viewmodel.MachineViewModel;
 import java.util.List;
@@ -488,6 +492,127 @@ class MainControllerTest {
                 List.of(0, 0, 0),
                 List.of(0, 0, 0),
                 List.of("AM"))).encryptText("A"), viewModel.outputTextProperty().get());
+    }
+
+    @Test
+    void lastTraceDescribesTheLastLetter() {
+        controller.pasteText("HELLO");
+
+        assertEquals('O', viewModel.lastTraceProperty().get().input());
+        assertEquals('A', viewModel.lastTraceProperty().get().output());
+        assertEquals(List.of(0, 0, 5), viewModel.lastTraceProperty().get().positions());
+    }
+
+    @Test
+    void lastTraceIsEmptyAtFirstAndAfterEachWayOfRemovingLetters() {
+        assertNull(viewModel.lastTraceProperty().get());
+        List<Runnable> removals = List.of(
+                controller::deleteLastLetter, controller::clear, controller::reset, controller::applySettings);
+
+        for (Runnable removal : removals) {
+            controller.pressKey('A');
+            removal.run();
+            assertNull(viewModel.lastTraceProperty().get());
+        }
+    }
+
+    @Test
+    void lastTraceMatchesWhatTheUserSees() {
+        for (char letter : "ENIGMAMACHINE".toCharArray()) {
+            controller.pressKey(letter);
+
+            SignalTrace trace = viewModel.lastTraceProperty().get();
+            String input = viewModel.inputTextProperty().get();
+            String output = viewModel.outputTextProperty().get();
+            StringBuilder traceWindows = new StringBuilder();
+            trace.positions().forEach(position -> traceWindows.append(Alphabet.toLetter(position)));
+
+            assertEquals(input.charAt(input.length() - 1), trace.input());
+            assertEquals(output.charAt(output.length() - 1), trace.steps().getLast().output());
+            assertEquals(String.valueOf(trace.output()), viewModel.litLampProperty().get());
+            assertEquals(traceWindows.toString(), viewModel.rotorWindowsProperty().get());
+        }
+    }
+
+    @Test
+    void ignoredKeysLeaveTheLastTraceAsItWas() {
+        controller.pressKey('A');
+        SignalTrace trace = viewModel.lastTraceProperty().get();
+
+        controller.pressKey('7');
+        controller.pasteText(" 7! ");
+
+        assertEquals(trace, viewModel.lastTraceProperty().get());
+    }
+
+    @Test
+    void resetIsOfferedOnlyWhenItWouldChangeSomething() {
+        assertFalse(viewModel.resettableProperty().get());
+
+        controller.pressKey('A');
+        assertTrue(viewModel.resettableProperty().get());
+
+        controller.deleteLastLetter();
+        assertFalse(viewModel.resettableProperty().get());
+
+        controller.pressKey('A');
+        controller.clear();
+        assertTrue(viewModel.resettableProperty().get(), "The rotors have left their start.");
+
+        controller.reset();
+        assertFalse(viewModel.resettableProperty().get());
+    }
+
+    @Test
+    void applyingSettingsThatStartMidMessageLeavesNothingToReset() {
+        controller.pressKey('A');
+
+        applyMidMessageSettings();
+
+        assertFalse(viewModel.resettableProperty().get());
+    }
+
+    @Test
+    void actionsOnTheMessageAreReported() {
+        controller.pressKey('A');
+        controller.pressKey('B');
+
+        controller.decrypt();
+        assertEquals("Decrypted 2 letters.", viewModel.statusProperty().get());
+
+        controller.clear();
+        assertEquals("Message cleared. The rotors stay at AAC.", viewModel.statusProperty().get());
+
+        controller.reset();
+        assertEquals("Reset. The rotors are back at AAA.", viewModel.statusProperty().get());
+    }
+
+    @Test
+    void typingOrDeletingHidesTheLastReport() {
+        controller.pressKey('A');
+        controller.clear();
+
+        controller.pressKey('A');
+        assertEquals("", viewModel.statusProperty().get());
+
+        controller.reset();
+        controller.pressKey('A');
+        controller.deleteLastLetter();
+        assertEquals("", viewModel.statusProperty().get());
+    }
+
+    @Test
+    void pasteWithoutLettersIsReported() {
+        controller.pasteText(" 7! ");
+
+        assertEquals("The pasted text has no letters to encrypt.", viewModel.statusProperty().get());
+    }
+
+    @Test
+    void decryptOfAnEmptyMessageReportsNothing() {
+        controller.decrypt();
+
+        assertEquals("", viewModel.statusProperty().get());
     }
 
     private void applyMidMessageSettings() {

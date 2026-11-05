@@ -19,7 +19,7 @@ public final class MessagesView extends VBox {
 
     private static final double SPACING = 8;
 
-    public MessagesView(MainController controller) {
+    public MessagesView(MainController controller, Shortcuts shortcuts) {
         super(SPACING);
         setPadding(new Insets(SPACING));
         MachineViewModel viewModel = controller.viewModel();
@@ -30,13 +30,35 @@ public final class MessagesView extends VBox {
                 "Decrypt", "Run the output back through the machine from where the message began.", controller::decrypt);
         decrypt.disableProperty().bind(viewModel.outputTextProperty().isEmpty());
 
-        HBox actions = new HBox(SPACING,
-                decrypt,
-                action("Clear","Empty the messages; the rotors stay where they are.", controller::clear),
-                action("Reset", "Empty the messages and restore the initial rotor positions.", controller::reset));
+        Button clear = action("Clear", "Empty the messages; the rotors stay where they are.", controller::clear);
+        clear.disableProperty().bind(viewModel.inputTextProperty().isEmpty());
+        Button reset = action(
+                "Reset", "Empty the messages and restore the initial rotor positions.", controller::reset);
+        reset.disableProperty().bind(viewModel.resettableProperty().not());
+        shortcuts.add("Shortcut+D", decrypt);
+        shortcuts.add("Shortcut+L", clear);
+        shortcuts.add("Shortcut+R", reset);
+
+        // On its own line, so a narrow panel squeezes neither the note nor the buttons.
+        Label status = new Label();
+        status.getStyleClass().add("message-status");
+        status.setWrapText(true);
+        status.textProperty().bind(viewModel.statusProperty());
+        status.managedProperty().bind(status.textProperty().isNotEmpty());
+
+        HBox actions = new HBox(SPACING, decrypt, clear, reset);
         actions.setAlignment(Pos.CENTER_RIGHT);
 
-        getChildren().addAll(new Label("Input"), input, new Label("Output"), output, actions);
+        getChildren().addAll(
+                labelFor("Input", input), input, labelFor("Output", output), output, status, actions);
+    }
+
+    /** Names the area for screen readers, which otherwise announce only "text area". */
+    private static Label labelFor(String title, TextArea area) {
+        Label label = new Label(title);
+        label.setLabelFor(area);
+        area.setAccessibleText(title + " message");
+        return label;
     }
 
     private static TextArea messageArea(ObservableValue<String> text) {
