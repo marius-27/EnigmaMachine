@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Enigma Machine" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.example.enigmamachine.Launcher" />
+    <module name="EnigmaMachine" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

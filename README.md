@@ -34,6 +34,14 @@ On Linux and macOS, use `./mvnw` instead of `.\mvnw.cmd`.
 
 After `verify`, the test coverage report is in `target/site/jacoco/index.html`.
 
+In IntelliJ IDEA, the project includes these run configurations, listed next to the Run button:
+
+| Configuration | What it does |
+|---|---|
+| Enigma Machine | Starts the application |
+| All tests | Runs every test, with results shown test by test |
+| Build and test | Runs `mvn clean verify`, exactly as on the command line, including the coverage report |
+
 ## User guide
 
 ### Encrypt a message
