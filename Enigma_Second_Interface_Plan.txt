@@ -1,0 +1,132 @@
+ENIGMA M3 - PLAN PENTRU A DOUA INTERFATA
+======================================
+
+Scop
+----
+O a doua prezentare a aceleiasi masini, accesibila din prima pagina prin
+butonul "Mode". Interfata actuala ramane disponibila ca "Classic";
+noua interfata este "Diagram". Comutarea este reversibila in aceeasi fereastra.
+
+Referinta: Coding Cassowary, "Coding the Enigma machine - Part 1"
+https://www.youtube.com/watch?v=sbm2dmkmqgQ
+Capitolele publicate includ Keyboard, Plugboard, Rotors, Reflector si
+Enciphering a letter. Descrierea si capitolele au fost consultate;
+aspectul exact al cadrelor nu a fost verificat vizual. Compozitia de mai jos
+este o propunere, de comparat cu un cadru ales din videoclip in etapa 01.
+
+Branch propus: feature/12-diagram-interface
+Baza: origin/develop actualizat, dupa integrarea etapei 11.
+PR: feature/12-diagram-interface -> develop.
+Branch creat: feature/12-diagram-interface din origin/develop.
+
+Comportament
+------------
+- Bara comuna: titlu, Mode, modul activ si status.
+- Mode comuta Classic <-> Diagram; ramane vizibil in ambele moduri.
+- Se pastreaza mesajele, configuratia aplicata, pozitiile curente,
+  istoricul Undo si setarile editate, inclusiv cele neaplicate.
+- Schimbarea modului nu cripteaza, nu avanseaza rotoare si nu reseteaza.
+- La comutare se opreste animatia vechii vederi si se elibereaza tastele
+  retinute. Ultimul traseu poate fi reluat in noua vedere.
+- Modul initial este Classic; memorarea preferintei intre porniri este optionala.
+
+Aspect propus pentru Diagram
+---------------------------
+- Zona centrala larga cu reflector, trei rotoare, plugboard si intrare/iesire.
+- Fiecare componenta are contacte A-Z, etichete si conexiuni vizibile.
+- Cele doua sensuri ale semnalului au culori distincte si indicatoare de sens;
+  explicatia textuala nu depinde exclusiv de culoare.
+- Pozitiile rotoarelor si traseul literei urmeaza starea reala a motorului.
+- Tastatura si lampboard raman disponibile sub diagrama.
+- Mesajele si setarile sunt accesibile dintr-un panou lateral sau file.
+- Play/Pause/Step si viteza controleaza doar redarea traseului.
+- La fereastra mica: diagrama scalata cu litere lizibile sau scroll;
+  comenzile Mode, Reset si criptarea raman accesibile.
+
+Arhitectura
+-----------
+- Un singur MainController, EnigmaService si set de view models pe sesiune.
+- App construieste un ApplicationShell cu bara Mode si continutul activ.
+- MainView este vederea Classic; DiagramView este noua vedere.
+- InterfaceMode descrie modul; shell-ul detine selectia si ciclul de viata.
+- Un singur gestionar de input/scurtaturi instalat pe Scene.
+  KeyboardView.attachTo adauga acum filtre si un listener pe Stage;
+  acestea trebuie refactorizate cu dezabonare explicita sau mutate intr-un
+  gestionar comun, pentru a preveni criptarea dubla dupa comutari.
+- Vederile au activare/dezactivare: opresc Timeline, elimina listener-ele
+  temporare si nu mai reactioneaza la input cand sunt ascunse.
+- SignalTrace furnizeaza pasii reali de intrare/iesire si pozitiile dupa
+  stepping. Pentru desenarea TUTUROR firelor unui rotor poate fi necesar
+  un snapshot imutabil de mapping, calculat prin logica existenta a rotorului.
+  Diagrama nu reimplementeaza formulele de criptare in JavaFX.
+- Formele si firele se deseneaza cu noduri JavaFX; CSS separat,
+  limitat prin clasa radacina a noii vederi.
+
+Etapa 01 - Referinta vizuala
+---------------------------
+Commit 50: docs: specify diagram interface layout and mode behavior
+[ ] Alegem cadrul/minutul de referinta si verificam compozitia dorita.
+[x] Schita statica: docs/diagram-interface-layout.svg; specificatie: docs/diagram-interface.md.
+[ ] Confirmam ca prioritatea este diagrama componentelor din videoclip.
+Gata cand: exista o referinta vizuala concreta pentru comparatie.
+
+Etapa 02 - Comutare si input comun
+---------------------------------
+Commit 51: refactor: centralize scene input and view lifecycle
+Commit 52: feat: add Mode switch and application shell
+[ ] Extragere input/scurtaturi cu instalare unica si dezabonare controlata.
+[ ] Buton Mode prezent pe prima pagina si in noua interfata.
+[ ] Aceeasi sesiune si aceleasi setari pentru ambele vederi.
+Gata cand: comutari repetate nu dubleaza procesarea si nu pierd starea.
+
+Etapa 03 - Diagrama statica
+--------------------------
+Commit 53: feat: render rotor plugboard and reflector diagram
+[ ] Contacte A-Z, rotoare ordonate corect si reflector B/C.
+[ ] Firele reflecta configuratia, pozitiile si Ringstellung.
+[ ] Actualizare dupa Apply, Load + Apply, Reset, Undo si fiecare litera.
+[ ] Tastatura, lampboard, mesaje si setari functionale in noul mod.
+Gata cand: setarile reale sunt reprezentate lizibil la dimensiunea minima.
+
+Etapa 04 - Traseu animat
+-----------------------
+Commit 54: feat: animate diagram from engine signal traces
+[ ] Evidentiere in ordinea celor noua etape SignalTrace.
+[ ] Sens tur/retur, litera de intrare/iesire si explicatia pasului.
+[ ] Play/Pause/Step, viteza si mod educational.
+[ ] Taste rapide/paste: animatia veche este anulata, se arata ultimul traseu;
+    toate literele sunt criptate o singura data, fara coada vizuala nelimitata.
+Gata cand: ultimul contact evidentiat coincide cu output si lampboard.
+
+Etapa 05 - Verificare si finisare
+--------------------------------
+Commit 55: test: cover mode switching and diagram state synchronization
+Commit 56: style: refine diagram layout and accessibility
+[ ] Classic -> Diagram -> Classic pastreaza mesajele si pozitiile.
+[ ] 20 de comutari urmate de o tasta produc o singura criptare.
+[ ] Test pentru comutare cu tasta tinuta si pierderea focusului.
+[ ] Setari neaplicate, Undo, Clear, Reset si Decrypt raman corecte.
+[ ] Schimbarea modului in timpul animatiei nu modifica rezultatul.
+[ ] Mapping-ul desenat corespunde transformarilor rotorului cu offset-uri.
+[ ] Vectorii istorici si testele existente continua sa treaca.
+[ ] Contrast, focus, explicatii accesibile si redimensionare verificate.
+Gata cand: mvn clean verify trece si ambele moduri sunt verificate vizual.
+
+Etapa 06 - Documentatie si distributie
+-------------------------------------
+Commit 57: docs: document interface modes and diagram controls
+[ ] README cu doua capturi, butonul Mode si comenzile noii interfete.
+[ ] Referinta video mentionata ca inspiratie.
+[ ] mvn clean verify -Pdist trece.
+[ ] Pachetul extras porneste si ambele moduri functioneaza.
+[ ] PR catre develop, cu descriere si dovezi de verificare.
+
+Definitia finalizarii
+--------------------
+[ ] A doua interfata seamana cu referinta vizuala convenita.
+[ ] Mode este accesibil din prima pagina si permite revenirea.
+[ ] Un singur motor si o singura sesiune pentru ambele interfete.
+[ ] Nicio regresie in corectitudinea istorica sau in interfata Classic.
+[ ] Teste, documentatie si verificarea pachetului sunt finalizate.
+
+Nu intra initial: motor nou, M4, randare 3D, sunete sau instalatoare noi.

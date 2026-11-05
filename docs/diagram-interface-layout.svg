@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="760" viewBox="0 0 1100 760">
+  <title>Enigma Diagram mode — proposed layout</title>
+  <desc>Draft layout awaiting an exact video reference. The signal travels from the right through the plugboard and three rotors to the reflector, then returns.</desc>
+  <style>text{font-family:Arial,sans-serif;fill:#f3f4f6;font-size:15px}.panel{fill:#202731;stroke:#657080}.muted{fill:#b5bfcc}.small{font-size:12px}</style>
+  <rect width="1100" height="760" fill="#15191f"/>
+  <text x="24" y="34" font-size="22">ENIGMA M3 · Diagram</text>
+  <rect class="panel" x="966" y="12" width="110" height="34" rx="6"/><text x="1001" y="34">Mode</text>
+  <text x="24" y="68" class="muted">LAYOUT DRAFT · Exact video frame pending · Illustrative paths only</text>
+  <g class="panel">
+    <rect x="24" y="88" width="100" height="350" rx="6"/>
+    <rect x="152" y="88" width="130" height="350" rx="6"/>
+    <rect x="310" y="88" width="130" height="350" rx="6"/>
+    <rect x="468" y="88" width="130" height="350" rx="6"/>
+    <rect x="626" y="88" width="116" height="350" rx="6"/>
+    <rect x="770" y="88" width="306" height="646" rx="6"/>
+  </g>
+  <text x="36" y="114">Reflector B</text>
+  <text x="164" y="114">Left · I</text><text x="164" y="138" class="small">Position A · Ring 01</text>
+  <text x="322" y="114">Middle · II</text><text x="322" y="138" class="small">Position A · Ring 01</text>
+  <text x="480" y="114">Right · III</text><text x="480" y="138" class="small">Position B · Ring 01</text>
+  <text x="638" y="114">Plugboard</text>
+  <g stroke="#657080" fill="none" opacity="0.7">
+    <path d="M164 180L270 340M164 220L270 180M164 260L270 380M164 300L270 220M164 340L270 260M164 380L270 300"/>
+    <path d="M322 180L428 300M322 220L428 380M322 260L428 180M322 300L428 340M322 340L428 220M322 380L428 260"/>
+    <path d="M480 180L586 260M480 220L586 340M480 260L586 380M480 300L586 180M480 340L586 300M480 380L586 220"/>
+  </g>
+  <path d="M730 180H638L586 180L480 300L428 300L322 340L270 340L164 220H100Q48 220 48 280" fill="none" stroke="#f4c95d" stroke-width="4"/>
+  <path d="M48 280Q48 380 100 380H164L270 260H322L428 220H480L586 340H638L730 340" fill="none" stroke="#66d9ef" stroke-width="4"/>
+  <text x="36" y="465" fill="#f4c95d">← Forward</text><text x="200" y="465" fill="#66d9ef">Return →</text>
+  <text x="36" y="495">Step 5 / 9 · Reflector · input → output</text>
+  <rect class="panel" x="24" y="512" width="718" height="42" rx="6"/>
+  <text x="40" y="538">Play    Pause    Step                 Speed: 1×                 Educational mode</text>
+  <text x="790" y="118">Messages  |  Settings  |  Signal</text>
+  <text x="790" y="168">Input</text><text x="790" y="198">AAAAA</text>
+  <text x="790" y="248">Output</text><text x="790" y="278">BDZGO</text>
+  <text x="790" y="338">Decrypt    Clear    Reset</text>
+  <text x="790" y="398" class="muted">Settings and trace details</text>
+  <text x="790" y="424" class="muted">remain accessible here.</text>
+  <rect class="panel" x="24" y="578" width="718" height="56" rx="6"/>
+  <text x="44" y="612">Lampboard · A B C D E F G H I J K L M N O P Q R S T U V W X Y Z</text>
+  <rect class="panel" x="24" y="650" width="718" height="84" rx="6"/>
+  <text x="44" y="680">Keyboard · Q W E R T Z U I O</text>
+  <text x="128" y="702">A S D F G H J K</text><text x="128" y="724">P Y X C V B N M L</text>
+</svg>
