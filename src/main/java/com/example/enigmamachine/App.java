@@ -18,7 +18,7 @@ public class App extends Application {
     private static final String STYLESHEET = "/styles/app.css";
     private static final double WIDTH = 1100;
     private static final double HEIGHT = 760;
-    private static final double MIN_WIDTH = 820;
+    private static final double MIN_WIDTH = 860;
     private static final double MIN_HEIGHT = 600;
     private static final MachineConfiguration DEFAULT_CONFIGURATION = new MachineConfiguration(
             List.of(RotorDefinition.I, RotorDefinition.II, RotorDefinition.III),

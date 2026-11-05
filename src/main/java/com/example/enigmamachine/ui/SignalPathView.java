@@ -61,7 +61,7 @@ public final class SignalPathView extends VBox {
     private final ObjectProperty<Double> speed = new SimpleObjectProperty<>(NORMAL_SPEED);
     private final Timeline timeline;
 
-    public SignalPathView(ObservableValue<SignalTrace> lastTrace) {
+    public SignalPathView(ObservableValue<SignalTrace> lastTrace, Shortcuts shortcuts) {
         super(SPACING);
         setPadding(new Insets(8));
         summary.getStyleClass().add("signal-summary");
@@ -77,13 +77,13 @@ public final class SignalPathView extends VBox {
         timeline.setCycleCount(Animation.INDEFINITE);
         speed.addListener((observable, previous, current) -> timeline.setRate(current));
 
-        getChildren().add(controls());
+        getChildren().add(controls(shortcuts));
 
         playback.activeStepProperty().addListener((observable, previous, current) -> refreshRows());
         lastTrace.addListener((observable, previous, current) -> show(current));
     }
 
-    private Node controls() {
+    private Node controls(Shortcuts shortcuts) {
         BooleanBinding playing = timeline.statusProperty().isEqualTo(Animation.Status.RUNNING);
 
         Button play = controlButton("signal-play", this::togglePlaying);
@@ -95,6 +95,7 @@ public final class SignalPathView extends VBox {
         step.disableProperty().bind(playback.canAdvanceProperty().not());
 
         Node speedSelector = SettingsView.selector("signal-speed", SPEEDS, speed, SignalPathView::speedLabel);
+        speedSelector.setAccessibleText("Animation speed");
 
         educationalMode.getStyleClass().add("signal-educational");
         educationalMode.setTooltip(new Tooltip("Each new letter waits at its first step until you press Play or Step."));
@@ -105,6 +106,10 @@ public final class SignalPathView extends VBox {
                 timeline.stop();
             }
         });
+
+        shortcuts.add("Shortcut+P", play);
+        shortcuts.add("Shortcut+N", step);
+        shortcuts.add("Shortcut+E", educationalMode);
 
         HBox buttons = new HBox(8, play, step, new Label("Speed"), speedSelector);
         buttons.setAlignment(Pos.CENTER_LEFT);
