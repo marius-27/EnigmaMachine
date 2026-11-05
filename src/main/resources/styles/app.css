@@ -5,6 +5,8 @@
     -enigma-text: #ece7da;
     -enigma-gold: #d4af37;
     -enigma-gold-bright: #f0cf63;
+    -enigma-window: #17191c;
+    -enigma-lamp-off: #8a8578;
 
     -fx-base: -enigma-panel;
     -fx-background: -enigma-background;
@@ -36,7 +38,7 @@
 }
 
 .rotor-window {
-    -fx-background-color: #17191c;
+    -fx-background-color: -enigma-window;
     -fx-background-radius: 4px;
     -fx-border-color: -enigma-border;
     -fx-border-radius: 4px;
@@ -93,8 +95,8 @@
     -fx-alignment: center;
     -fx-font-family: "Consolas", monospace;
     -fx-font-weight: bold;
-    -fx-text-fill: #8a8578;
-    -fx-background-color: #17191c;
+    -fx-text-fill: -enigma-lamp-off;
+    -fx-background-color: -enigma-window;
     -fx-background-radius: 22px;
     -fx-border-radius: 22px;
     -fx-border-color: -enigma-border;
@@ -174,7 +176,8 @@
 }
 
 .settings-status,
-.settings-file-message {
+.settings-message,
+.message-status {
     -fx-text-fill: -enigma-gold-bright;
 }
 
@@ -207,5 +210,23 @@
 }
 
 .button:disabled {
-    -fx-opacity: 0.45;
+    -fx-opacity: 0.55;
+}
+
+/* Keyboard focus: the message areas and the tabs are the only controls in the focus order. */
+.text-area:focused {
+    -fx-background-color: -enigma-gold-bright, -fx-control-inner-background;
+    -fx-background-insets: 0, 2;
+}
+
+.tab-pane:focused > .tab-header-area > .headers-region > .tab:selected .focus-indicator {
+    -fx-border-color: -enigma-gold-bright;
+    -fx-border-width: 2;
+    -fx-border-insets: -2;
+    -fx-border-radius: 2;
+}
+
+.scroll-pane,
+.scroll-pane > .viewport {
+    -fx-background-color: -enigma-panel;
 }

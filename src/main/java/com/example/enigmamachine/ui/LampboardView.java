@@ -39,13 +39,21 @@ public final class LampboardView extends VBox {
     private Label createLamp(String letter) {
         Label lamp = new Label(letter);
         lamp.getStyleClass().add("lamp");
+        lamp.setAccessibleText(lampDescription(letter, false));
         lamps.put(letter, lamp);
         return lamp;
     }
 
     private void setLit(String letter, boolean lit) {
         if (!letter.isEmpty()) {
-            lamps.get(letter).pseudoClassStateChanged(LIT, lit);
+            Label lamp = lamps.get(letter);
+            lamp.pseudoClassStateChanged(LIT, lit);
+            lamp.setAccessibleText(lampDescription(letter, lit));
         }
+    }
+
+    /** The glow is the only sign of a lit lamp on screen, so screen readers are told in words. */
+    static String lampDescription(String letter, boolean lit) {
+        return "Lamp " + letter + (lit ? ", lit" : "");
     }
 }

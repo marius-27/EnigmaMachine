@@ -2,6 +2,7 @@ package com.example.enigmamachine.ui;
 
 import com.example.enigmamachine.ui.viewmodel.SettingsViewModel;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
@@ -75,6 +76,22 @@ public final class PlugboardView extends VBox {
         sockets.forEach((letter, socket) -> {
             socket.pseudoClassStateChanged(CONNECTED, connected.indexOf(letter) >= 0);
             socket.pseudoClassStateChanged(PENDING, pending.indexOf(letter) >= 0);
+            socket.setAccessibleText(socketDescription(letter, settings.plugboardPairs(), pending));
         });
+    }
+
+    /** Colour alone shows a socket's state on screen, so screen readers are told in words. */
+    static String socketDescription(char letter, List<String> pairs, String pending) {
+        String name = "Plugboard " + letter;
+        if (pending.indexOf(letter) >= 0) {
+            return name + ", waiting for a partner";
+        }
+        for (String pair : pairs) {
+            int index = pair.indexOf(letter);
+            if (index >= 0) {
+                return name + ", connected to " + pair.charAt(1 - index);
+            }
+        }
+        return name;
     }
 }

@@ -31,7 +31,7 @@ public final class SettingsViewModel {
     private final ObservableList<String> readOnlyPlugboardPairs = FXCollections.unmodifiableObservableList(plugboardPairs);
     private final ReadOnlyStringWrapper pendingPlugboardLetter = new ReadOnlyStringWrapper("");
     private final ReadOnlyStringWrapper plugboardWarning = new ReadOnlyStringWrapper("");
-    private final ReadOnlyStringWrapper fileMessage = new ReadOnlyStringWrapper("");
+    private final ReadOnlyStringWrapper message = new ReadOnlyStringWrapper("");
     private final List<ObjectProperty<Integer>> positions;
     private final List<ObjectProperty<Integer>> ringSettings;
     private final ObjectProperty<Reflector> reflector;
@@ -51,10 +51,15 @@ public final class SettingsViewModel {
         }
         markApplied();
 
-        List<Observable> dependencies = new ArrayList<>(List.of(applied, reflector, plugboardPairs));
-        dependencies.addAll(rotors);
-        dependencies.addAll(positions);
-        dependencies.addAll(ringSettings);
+        List<Observable> editors = new ArrayList<>(List.of(reflector, plugboardPairs));
+        editors.addAll(rotors);
+        editors.addAll(positions);
+        editors.addAll(ringSettings);
+        // A message about a save, load or apply describes the settings as they were, so any edit makes it stale.
+        editors.forEach(editor -> editor.addListener(observable -> message.set("")));
+
+        List<Observable> dependencies = new ArrayList<>(editors);
+        dependencies.add(applied);
         this.unappliedChanges = Bindings.createBooleanBinding(
                 this::differsFromApplied, dependencies.toArray(Observable[]::new));
     }
@@ -75,13 +80,16 @@ public final class SettingsViewModel {
         configuration.plugboardPairs().forEach(pair -> connect(pair.charAt(0), pair.charAt(1)));
     }
 
-    /** The result of the last save or load, or an empty string before the first one. */
-    public ReadOnlyStringProperty fileMessageProperty() {
-        return fileMessage.getReadOnlyProperty();
+    /**
+     * The result of the last save, load or apply, or an empty string. Editing any setting empties it,
+     * so it never describes settings that have changed since.
+     */
+    public ReadOnlyStringProperty messageProperty() {
+        return message.getReadOnlyProperty();
     }
 
-    public void showFileMessage(String message) {
-        fileMessage.set(message);
+    public void showMessage(String text) {
+        message.set(text);
     }
 
     /** True while the edited settings differ from those the machine is running with. */

@@ -2,7 +2,6 @@ package com.example.enigmamachine.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.example.enigmamachine.domain.EnigmaMachine;
@@ -156,6 +155,34 @@ class SettingsApplyTest {
     }
 
     @Test
+    void applyingReportsTheNewStartPositions() {
+        settings.positionProperty(0).set(2);
+
+        controller.applySettings();
+
+        assertEquals("Settings applied. The rotors start at CAA.", settings.messageProperty().get());
+    }
+
+    @Test
+    void editingASettingEmptiesTheMessageAboutTheOldOnes() {
+        settings.positionProperty(0).set(2);
+        controller.applySettings();
+
+        settings.reflectorProperty().set(Reflector.C);
+
+        assertEquals("", settings.messageProperty().get());
+    }
+
+    @Test
+    void plugboardEditsAlsoEmptyTheMessage() {
+        settings.showMessage("Saved machine.json.");
+
+        press("AB");
+
+        assertEquals("", settings.messageProperty().get());
+    }
+
+    @Test
     void startingPairsAreNormalizedSoTheyCanBeEdited() {
         SettingsViewModel started = new SettingsViewModel(new MachineConfiguration(
                 DEFAULT.rotors(), Reflector.B, List.of(0, 0, 0), List.of(0, 0, 0), List.of("zy", "BA")));
@@ -173,7 +200,10 @@ class SettingsApplyTest {
 
         invalidEdit.run();
 
-        assertThrows(RuntimeException.class, controller::applySettings);
+        controller.applySettings();
+
+        assertTrue(settings.messageProperty().get().startsWith("Cannot apply these settings: "),
+                settings.messageProperty().get());
         assertEquals("A", viewModel.inputTextProperty().get());
         assertEquals("AAB", viewModel.rotorWindowsProperty().get());
         assertTrue(settings.unappliedChangesBinding().get());

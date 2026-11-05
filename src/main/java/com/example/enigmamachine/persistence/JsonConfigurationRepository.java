@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -16,6 +17,10 @@ import java.nio.file.StandardCopyOption;
  * Saves configurations as UTF-8 JSON, in the format described by {@link ConfigurationFile}.
  */
 public final class JsonConfigurationRepository implements ConfigurationRepository {
+
+    // Ten attempts with growing pauses wait at most 0.9 seconds in total.
+    private static final int MOVE_ATTEMPTS = 10;
+    private static final long RETRY_PAUSE_MILLIS = 20;
 
     // Without this, anything after the first JSON value in a file would be ignored without a word.
     private final ObjectMapper mapper = new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
@@ -58,13 +63,45 @@ public final class JsonConfigurationRepository implements ConfigurationRepositor
         Path temporary = Files.createTempFile(target.getParent(), target.getFileName().toString(), ".tmp");
         try {
             Files.writeString(temporary, contents, StandardCharsets.UTF_8);
-            try {
-                Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE);
-            } catch (AtomicMoveNotSupportedException e) {
-                Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
-            }
+            moveIntoPlace(temporary, target);
         } finally {
             Files.deleteIfExists(temporary);
+        }
+    }
+
+    /**
+     * Windows refuses to replace a file while another program has it open, and virus scanners and search
+     * indexers often open a file for a moment right after it is written. Waiting a little and trying again
+     * gets past them; a file that stays locked is still reported as an error.
+     */
+    private static void moveIntoPlace(Path temporary, Path target) throws IOException {
+        for (int attempt = 1; ; attempt++) {
+            try {
+                move(temporary, target);
+                return;
+            } catch (AccessDeniedException e) {
+                if (attempt == MOVE_ATTEMPTS) {
+                    throw e;
+                }
+                pause(attempt * RETRY_PAUSE_MILLIS, e);
+            }
+        }
+    }
+
+    private static void move(Path temporary, Path target) throws IOException {
+        try {
+            Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private static void pause(long millis, AccessDeniedException cause) throws AccessDeniedException {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw cause;
         }
     }
 }

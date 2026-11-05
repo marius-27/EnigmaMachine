@@ -2,6 +2,7 @@ package com.example.enigmamachine.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -28,6 +29,8 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -559,13 +562,13 @@ class MainViewInputTest {
     }
 
     @Test
-    void fileMessageIsShownInTheSettings() {
+    void settingsMessageIsShownInTheSettings() {
         onFxThread(() -> {
-            Label message = (Label) view.lookup(".settings-file-message");
+            Label message = (Label) view.lookup(".settings-message");
             assertEquals("", message.getText());
             assertFalse(message.isManaged());
 
-            controller.settings().showFileMessage("Saved machine.json.");
+            controller.settings().showMessage("Saved machine.json.");
 
             assertEquals("Saved machine.json.", message.getText());
             assertTrue(message.isManaged());
@@ -610,6 +613,94 @@ class MainViewInputTest {
     }
 
     @Test
+    void shortcutsRunTheMessageActionsWithoutTypingALetter() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            shortcut(KeyCode.D, "d");
+            assertState("I", "H", "AAB");
+
+            shortcut(KeyCode.R, "r");
+            assertState("", "", "AAA");
+        });
+    }
+
+    @Test
+    void shortcutOfADisabledButtonDoesNothing() {
+        onFxThread(() -> {
+            shortcut(KeyCode.D, "d");
+            shortcut(KeyCode.ENTER, "\r");
+
+            assertState("", "", "AAA");
+            assertEquals("", controller.viewModel().statusProperty().get());
+        });
+    }
+
+    @Test
+    void shortcutAppliesTheEditedSettings() {
+        onFxThread(() -> {
+            controller.settings().positionProperty(0).set(2);
+
+            shortcut(KeyCode.ENTER, "\r");
+
+            assertState("", "", "CAA");
+        });
+    }
+
+    @Test
+    void digitShortcutsSwitchTheSidePanelTabs() {
+        onFxThread(() -> {
+            TabPane tabs = (TabPane) view.lookup(".tab-pane");
+
+            shortcut(KeyCode.DIGIT2, "2");
+            assertEquals("Settings", tabs.getSelectionModel().getSelectedItem().getText());
+
+            shortcut(KeyCode.DIGIT3, "3");
+            assertEquals("Signal", tabs.getSelectionModel().getSelectedItem().getText());
+
+            shortcut(KeyCode.DIGIT1, "1");
+            assertEquals("Messages", tabs.getSelectionModel().getSelectedItem().getText());
+        });
+    }
+
+    @Test
+    void everyShortcutIsShownInItsButtonTooltip() {
+        onFxThread(() -> {
+            for (String title : List.of("Decrypt", "Clear", "Reset", "Apply", "Save…", "Load…", "Step")) {
+                Button button = buttonLabeled(title);
+                assertTrue(button.getTooltip().getText().contains("Shortcut: "), title);
+                assertEquals(button.getTooltip().getText(), button.getAccessibleHelp(), title);
+            }
+            assertTrue(educationalMode().getTooltip().getText().contains("Shortcut: "));
+        });
+    }
+
+    @Test
+    void settingsAndSignalPanelsScrollInsteadOfBeingCutOff() {
+        onFxThread(() -> {
+            TabPane tabs = (TabPane) view.lookup(".tab-pane");
+
+            assertInstanceOf(ScrollPane.class, tabs.getTabs().get(1).getContent());
+            assertInstanceOf(ScrollPane.class, tabs.getTabs().get(2).getContent());
+            assertFalse(tabs.getTabs().get(1).getContent().isFocusTraversable());
+        });
+    }
+
+    @Test
+    void lampsAndRotorWindowsAreDescribedForScreenReaders() {
+        onFxThread(() -> {
+            tap(scene, "h", KeyCode.H);
+
+            List<String> descriptions = view.lookupAll(".lamp").stream().map(Node::getAccessibleText).toList();
+            assertTrue(descriptions.contains("Lamp I, lit"), descriptions.toString());
+            assertTrue(descriptions.contains("Lamp H"), descriptions.toString());
+
+            List<String> windows = view.lookupAll(".rotor-window").stream().map(Node::getAccessibleText).toList();
+            assertEquals(List.of("Left rotor at A", "Middle rotor at A", "Right rotor at B"), windows);
+        });
+    }
+
+    @Test
     void decryptIsAvailableOnlyWhenThereIsOutput() {
         onFxThread(() -> {
             Button decrypt = buttonLabeled("Decrypt");
@@ -618,6 +709,39 @@ class MainViewInputTest {
             tap(scene, "h", KeyCode.H);
 
             assertFalse(decrypt.isDisabled());
+        });
+    }
+
+    @Test
+    void clearAndResetAreAvailableOnlyWhenTheyWouldChangeSomething() {
+        onFxThread(() -> {
+            Button clear = buttonLabeled("Clear");
+            Button reset = buttonLabeled("Reset");
+            assertTrue(clear.isDisabled());
+            assertTrue(reset.isDisabled());
+
+            tap(scene, "h", KeyCode.H);
+            assertFalse(clear.isDisabled());
+            assertFalse(reset.isDisabled());
+
+            clear.fire();
+            assertTrue(clear.isDisabled());
+            assertFalse(reset.isDisabled(), "The rotors have still left their start.");
+
+            reset.fire();
+            assertTrue(reset.isDisabled());
+        });
+    }
+
+    @Test
+    void messageStatusIsShownNextToTheActions() {
+        onFxThread(() -> {
+            Label status = (Label) view.lookup(".message-status");
+            tap(scene, "h", KeyCode.H);
+
+            buttonLabeled("Reset").fire();
+
+            assertEquals("Reset. The rotors are back at AAA.", status.getText());
         });
     }
 
@@ -832,6 +956,13 @@ class MainViewInputTest {
                 false, false, false, false,
                 button == MouseButton.PRIMARY, false, button == MouseButton.SECONDARY,
                 false, false, true, new PickResult(target, 0, 0)));
+    }
+
+    /** Presses the key with Ctrl, or with Command on macOS, which is what "Shortcut" means there. */
+    private void shortcut(KeyCode code, String text) {
+        boolean mac = System.getProperty("os.name").startsWith("Mac");
+        fire(scene, new KeyEvent(KeyEvent.KEY_PRESSED, text, text, code, false, !mac, false, mac));
+        fire(scene, new KeyEvent(KeyEvent.KEY_RELEASED, "", "", code, false, !mac, false, mac));
     }
 
     private static void fire(EventTarget target, Event event) {

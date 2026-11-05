@@ -1,6 +1,7 @@
 package com.example.enigmamachine.ui;
 
 import com.example.enigmamachine.domain.Alphabet;
+import com.example.enigmamachine.domain.MachineConfiguration;
 import com.example.enigmamachine.domain.SignalTrace;
 import com.example.enigmamachine.engine.EnigmaService;
 import com.example.enigmamachine.persistence.ConfigurationFileException;
@@ -26,7 +27,7 @@ public final class MainController {
         this.service = Objects.requireNonNull(service, "Enigma service is required.");
         this.repository = Objects.requireNonNull(repository, "Configuration repository is required.");
         this.settings = new SettingsViewModel(service.configuration());
-        viewModel.showRotorWindows(service.rotorWindows());
+        showMachineState();
     }
 
     public MachineViewModel viewModel() {
@@ -41,9 +42,11 @@ public final class MainController {
     public void saveSettings(Path file) {
         try {
             repository.save(settings.toConfiguration(), file);
-            settings.showFileMessage("Saved " + file.getFileName() + ".");
+            settings.showMessage("Saved " + file.getFileName() + ".");
         } catch (ConfigurationFileException e) {
-            settings.showFileMessage(e.getMessage());
+            settings.showMessage(e.getMessage());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            settings.showMessage("Cannot save these settings: " + e.getMessage());
         }
     }
 
@@ -54,9 +57,9 @@ public final class MainController {
     public void loadSettings(Path file) {
         try {
             settings.load(repository.load(file));
-            settings.showFileMessage("Loaded " + file.getFileName() + ".");
+            settings.showMessage("Loaded " + file.getFileName() + ". Apply to use these settings.");
         } catch (ConfigurationFileException e) {
-            settings.showFileMessage(e.getMessage());
+            settings.showMessage(e.getMessage());
         }
     }
 
@@ -81,6 +84,10 @@ public final class MainController {
                 LetterFolding.toLetter(typed).ifPresent(letters::append);
             }
         }
+        if (letters.isEmpty()) {
+            viewModel.showStatus("The pasted text has no letters to encrypt.");
+            return;
+        }
         process(letters.toString());
     }
 
@@ -90,11 +97,15 @@ public final class MainController {
      */
     public void decrypt() {
         String ciphertext = viewModel.outputTextProperty().get();
+        if (ciphertext.isEmpty()) {
+            return;
+        }
         while (service.undoLastLetter()) {
             // Each call moves the rotors one letter closer to the start of the message.
         }
         viewModel.clearMessages();
         process(ciphertext);
+        viewModel.showStatus("Decrypted " + letterCount(ciphertext.length()) + ".");
     }
 
     private void process(String letters) {
@@ -109,14 +120,16 @@ public final class MainController {
         }
         viewModel.appendLetters(letters, output.toString());
         viewModel.showLastTrace(lastTrace);
-        viewModel.showRotorWindows(service.rotorWindows());
+        viewModel.showStatus("");
+        showMachineState();
     }
 
     /** Removes the last letter from the messages and returns the rotors to where they were before it. */
     public void deleteLastLetter() {
         if (service.undoLastLetter()) {
             viewModel.removeLastLetters();
-            viewModel.showRotorWindows(service.rotorWindows());
+            viewModel.showStatus("");
+            showMachineState();
         }
     }
 
@@ -124,23 +137,46 @@ public final class MainController {
     public void clear() {
         service.forgetLetters();
         viewModel.clearMessages();
+        viewModel.showStatus("Message cleared. The rotors stay at " + service.rotorWindows() + ".");
+        showMachineState();
     }
 
     /**
      * Starts the machine with the edited settings. The current message was encrypted with the old settings,
      * so it is emptied rather than left next to letters it could no longer be decrypted with.
+     * Settings the machine cannot run with are reported, and the machine and message stay as they were.
      */
     public void applySettings() {
-        service.configure(settings.toConfiguration());
+        MachineConfiguration configuration;
+        try {
+            configuration = settings.toConfiguration();
+            service.configure(configuration);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            settings.showMessage("Cannot apply these settings: " + e.getMessage());
+            return;
+        }
         settings.markApplied();
         viewModel.clearMessages();
-        viewModel.showRotorWindows(service.rotorWindows());
+        viewModel.showStatus("New settings applied.");
+        showMachineState();
+        settings.showMessage("Settings applied. The rotors start at " + service.rotorWindows() + ".");
     }
 
     /** Does what {@link #clear()} does and also returns the rotors to their initial positions. */
     public void reset() {
         service.reset();
         viewModel.clearMessages();
+        viewModel.showStatus("Reset. The rotors are back at " + service.rotorWindows() + ".");
+        showMachineState();
+    }
+
+    private void showMachineState() {
         viewModel.showRotorWindows(service.rotorWindows());
+        viewModel.showResettable(
+                !service.atStartPositions() || !viewModel.inputTextProperty().get().isEmpty());
+    }
+
+    private static String letterCount(int count) {
+        return count == 1 ? "1 letter" : count + " letters";
     }
 }

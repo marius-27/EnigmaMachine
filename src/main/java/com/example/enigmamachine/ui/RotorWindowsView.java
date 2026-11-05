@@ -7,6 +7,7 @@ import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
+import javafx.scene.AccessibleRole;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -24,6 +25,7 @@ public final class RotorWindowsView extends HBox {
     private static final double WINDOW_WIDTH = 44;
     private static final double WINDOW_HEIGHT = 44;
     private static final Duration ROLL_DURATION = Duration.millis(120);
+    private static final List<String> SLOT_NAMES = List.of("Left", "Middle", "Right");
 
     private final List<RotorWindow> windows = new ArrayList<>();
 
@@ -31,8 +33,9 @@ public final class RotorWindowsView extends HBox {
         super(SPACING);
         setAlignment(Pos.CENTER);
         getStyleClass().add("rotor-windows");
-        for (char letter : rotorWindows.getValue().toCharArray()) {
-            RotorWindow window = new RotorWindow(letter);
+        String letters = rotorWindows.getValue();
+        for (int slot = 0; slot < letters.length(); slot++) {
+            RotorWindow window = new RotorWindow(SLOT_NAMES.get(slot), letters.charAt(slot));
             windows.add(window);
             getChildren().add(window);
         }
@@ -53,8 +56,11 @@ public final class RotorWindowsView extends HBox {
         private final Label shown;
         private final Label leaving = letterLabel("");
         private final ParallelTransition roll;
+        private final String slotName;
 
-        RotorWindow(char letter) {
+        RotorWindow(String slotName, char letter) {
+            this.slotName = slotName;
+            describe(letter);
             shown = letterLabel(String.valueOf(letter));
             shown.getStyleClass().add("rotor-window-current");
             leaving.setVisible(false);
@@ -84,6 +90,7 @@ public final class RotorWindowsView extends HBox {
             // A newer key press takes over from an animation that is still running.
             roll.stop();
             shown.setText(String.valueOf(letter));
+            describe(letter);
             if (isForwardStep(previous, letter)) {
                 leaving.setText(String.valueOf(previous));
                 leaving.setVisible(true);
@@ -92,6 +99,12 @@ public final class RotorWindowsView extends HBox {
                 leaving.setVisible(false);
                 shown.setTranslateY(0);
             }
+        }
+
+        /** A screen reader reads the window as a whole, without the letter that is rolling out of view. */
+        private void describe(char letter) {
+            setAccessibleRole(AccessibleRole.TEXT);
+            setAccessibleText(slotName + " rotor at " + letter);
         }
 
         private static Label letterLabel(String text) {

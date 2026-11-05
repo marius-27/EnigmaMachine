@@ -1,6 +1,8 @@
 package com.example.enigmamachine.ui.viewmodel;
 
 import com.example.enigmamachine.domain.SignalTrace;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
@@ -13,6 +15,8 @@ public final class MachineViewModel {
     private final ReadOnlyStringWrapper outputText = new ReadOnlyStringWrapper("");
     private final ReadOnlyStringWrapper litLamp = new ReadOnlyStringWrapper("");
     private final ReadOnlyObjectWrapper<SignalTrace> lastTrace = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyStringWrapper status = new ReadOnlyStringWrapper("");
+    private final ReadOnlyBooleanWrapper resettable = new ReadOnlyBooleanWrapper(false);
 
     public ReadOnlyStringProperty rotorWindowsProperty() {
         return rotorWindows.getReadOnlyProperty();
@@ -34,6 +38,24 @@ public final class MachineViewModel {
     /** The signal path of the last letter, or null when there is no letter to show it for. */
     public ReadOnlyObjectProperty<SignalTrace> lastTraceProperty() {
         return lastTrace.getReadOnlyProperty();
+    }
+
+    /** A short note about the last action on the messages, or an empty string. */
+    public ReadOnlyStringProperty statusProperty() {
+        return status.getReadOnlyProperty();
+    }
+
+    public void showStatus(String text) {
+        status.set(text);
+    }
+
+    /** True when a reset would change something: there is a message, or the rotors have left their start. */
+    public ReadOnlyBooleanProperty resettableProperty() {
+        return resettable.getReadOnlyProperty();
+    }
+
+    public void showResettable(boolean canReset) {
+        resettable.set(canReset);
     }
 
     public void showLastTrace(SignalTrace trace) {
