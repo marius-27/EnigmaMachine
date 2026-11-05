@@ -41,8 +41,51 @@ In IntelliJ IDEA, the project includes these run configurations, listed next to 
 | Enigma Machine | Starts the application |
 | All tests | Runs every test, with results shown test by test |
 | Build and test | Runs `mvn clean verify`, exactly as on the command line, including the coverage report |
+| Build distribution | Runs `mvn clean verify -Pdist`, including tests, coverage and the portable ZIP |
 
 ## User guide
+
+### Portable distribution
+
+Build and test the portable runtime image and ZIP with JDK 25:
+
+```powershell
+.\mvnw.cmd clean verify -Pdist
+```
+
+On Linux or macOS, use `./mvnw clean verify -Pdist`. The `dist` profile uses
+[the JavaFX Maven plugin's jlink support](https://github.com/openjfx/javafx-maven-plugin)
+to include the application, JavaFX, Jackson and a minimal Java runtime.
+The recipient does not need Java, Maven or an IDE installed.
+
+The image is in `target/EnigmaMachine/`; the ZIP is named
+`target/EnigmaMachine-1.0-SNAPSHOT-<os.name>-<os.arch>.zip`.
+For example, Windows 11 x64 produces
+`EnigmaMachine-1.0-SNAPSHOT-Windows 11-amd64.zip`.
+Extract the entire ZIP into an empty folder before launching:
+
+- Windows: double-click `bin/EnigmaMachine.bat` (or run it from PowerShell).
+- Linux/macOS: run `./bin/EnigmaMachine` from the extracted folder. If the
+  archive tool did not preserve permissions, first run
+  `chmod +x bin/EnigmaMachine bin/java`.
+
+Keep all extracted folders together, including `lib`, `conf` and `legal`.
+The small JAR produced by the normal build is not the portable distribution.
+The ZIP is a portable folder, not an installer or a macOS application bundle.
+
+The distribution was built and its bundled modules validated on **Windows 11 x64**.
+The visual release smoke check below still needs to be completed before publishing.
+Linux and macOS are
+source-build targets; their packages must be built and tested on the intended
+OS and CPU architecture before distribution. Runtime images are platform
+specific and cannot be copied between Windows, Linux and macOS, or between
+x64 and ARM64. A graphical desktop is required. The current package remains
+`1.0-SNAPSHOT` until the release is finalized.
+
+For a release smoke check, extract the ZIP outside the build image, launch its
+script, type `AAAAA` with the default settings and check for `BDZGO`. Press
+**Decrypt** and check that the output returns to `AAAAA`. Also check Apply,
+Reset, the Signal tab, and a JSON Save/Load round trip before publishing.
 
 ### Encrypt a message
 
