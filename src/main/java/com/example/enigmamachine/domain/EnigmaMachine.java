@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
+import java.util.stream.IntStream;
 
 public final class EnigmaMachine {
 
@@ -88,6 +89,23 @@ public final class EnigmaMachine {
             }
         }
         return output.toString();
+    }
+
+    /** Where every contact leads right now, as the next letter would see it before the rotors step. */
+    public WiringSnapshot wiringSnapshot() {
+        List<Rotor> rotors = List.of(left, middle, right);
+        List<WiringSnapshot.RotorWiring> wirings = new ArrayList<>(rotors.size());
+        for (int slot = 0; slot < rotors.size(); slot++) {
+            Rotor rotor = rotors.get(slot);
+            wirings.add(new WiringSnapshot.RotorWiring(configuration.rotors().get(slot), rotor.position(),
+                    configuration.ringSettings().get(slot), mapping(rotor::forward)));
+        }
+        return new WiringSnapshot(wirings, configuration.reflector(),
+                mapping(configuration.reflector()::reflect), mapping(plugboard::swap));
+    }
+
+    private static List<Integer> mapping(IntUnaryOperator component) {
+        return IntStream.range(0, Alphabet.SIZE).map(component).boxed().toList();
     }
 
     private Rotor createRotor(int slot, int position) {

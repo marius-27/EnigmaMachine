@@ -4,6 +4,7 @@ import com.example.enigmamachine.domain.Alphabet;
 import com.example.enigmamachine.domain.SignalTrace;
 import com.example.enigmamachine.domain.SignalTrace.Stage;
 import com.example.enigmamachine.domain.SignalTrace.Step;
+import com.example.enigmamachine.ui.viewmodel.PlaybackOptions;
 import com.example.enigmamachine.ui.viewmodel.SignalPlayback;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,8 @@ import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -40,7 +42,6 @@ public final class SignalPathView extends VBox {
     private static final double SPACING = 4;
     private static final Duration STEP_DURATION = Duration.millis(300);
     private static final List<Double> SPEEDS = List.of(0.5, 1.0, 2.0, 4.0);
-    private static final double NORMAL_SPEED = 1.0;
     private static final PseudoClass ACTIVE = PseudoClass.getPseudoClass("active");
     private static final String NO_TRACE = "Press a key to see its signal path.";
     private static final Map<Stage, String> STAGE_NAMES = Map.of(
@@ -58,10 +59,11 @@ public final class SignalPathView extends VBox {
     private final Label summary = new Label(NO_TRACE);
     private final List<StepRow> rows = new ArrayList<>();
     private final CheckBox educationalMode = new CheckBox("Educational mode");
-    private final ObjectProperty<Double> speed = new SimpleObjectProperty<>(NORMAL_SPEED);
+    private final ObjectProperty<Double> speed;
     private final Timeline timeline;
+    private boolean active;
 
-    public SignalPathView(ObservableValue<SignalTrace> lastTrace, Shortcuts shortcuts) {
+    public SignalPathView(ObservableValue<SignalTrace> lastTrace, PlaybackOptions options, Shortcuts shortcuts) {
         super(SPACING);
         setPadding(new Insets(8));
         summary.getStyleClass().add("signal-summary");
@@ -75,7 +77,10 @@ public final class SignalPathView extends VBox {
 
         timeline = new Timeline(new KeyFrame(STEP_DURATION, event -> playNextStep()));
         timeline.setCycleCount(Animation.INDEFINITE);
+        speed = options.speedProperty();
+        timeline.setRate(speed.get());
         speed.addListener((observable, previous, current) -> timeline.setRate(current));
+        educationalMode.selectedProperty().bindBidirectional(options.educationalProperty());
 
         getChildren().add(controls(shortcuts));
 
@@ -84,18 +89,8 @@ public final class SignalPathView extends VBox {
     }
 
     private Node controls(Shortcuts shortcuts) {
-        BooleanBinding playing = timeline.statusProperty().isEqualTo(Animation.Status.RUNNING);
-
-        Button play = controlButton("signal-play", this::togglePlaying);
-        play.textProperty().bind(Bindings.when(playing).then("Pause").otherwise("Play"));
-        play.disableProperty().bind(playback.activeStepProperty().isEqualTo(SignalPlayback.NO_STEP));
-
-        Button step = controlButton("signal-step-button", this::stepOnce);
-        step.setText("Step");
-        step.disableProperty().bind(playback.canAdvanceProperty().not());
-
-        Node speedSelector = SettingsView.selector("signal-speed", SPEEDS, speed, SignalPathView::speedLabel);
-        speedSelector.setAccessibleText("Animation speed");
+        Button play = playButton();
+        Button step = stepButton();
 
         educationalMode.getStyleClass().add("signal-educational");
         educationalMode.setTooltip(new Tooltip("Each new letter waits at its first step until you press Play or Step."));
@@ -111,11 +106,63 @@ public final class SignalPathView extends VBox {
         shortcuts.add("Shortcut+N", step);
         shortcuts.add("Shortcut+E", educationalMode);
 
-        HBox buttons = new HBox(8, play, step, new Label("Speed"), speedSelector);
+        HBox buttons = new HBox(8, play, step, new Label("Speed"), speedSelector());
         buttons.setAlignment(Pos.CENTER_LEFT);
         VBox controls = new VBox(8, buttons, educationalMode);
         controls.setPadding(new Insets(8, 0, 0, 0));
         return controls;
+    }
+
+    /**
+     * A second set of the same controls, for a view that shows the path somewhere else. It drives this playback,
+     * so both sets always agree; the shortcuts stay with the first set, so a key press acts only once.
+     */
+    Node replayBar() {
+        CheckBox educational = new CheckBox("Educational");
+        educational.getStyleClass().add("signal-educational");
+        educational.setTooltip(new Tooltip(educationalMode.getTooltip().getText()));
+        educational.setFocusTraversable(false);
+        educational.selectedProperty().bindBidirectional(educationalMode.selectedProperty());
+
+        HBox bar = new HBox(8, playButton(), stepButton(), new Label("Speed"), speedSelector(), educational);
+        bar.getStyleClass().add("signal-replay-bar");
+        bar.setAlignment(Pos.CENTER_LEFT);
+        return bar;
+    }
+
+    /** The trace being played, or null when there is none. */
+    ReadOnlyObjectProperty<SignalTrace> shownTraceProperty() {
+        return playback.traceProperty();
+    }
+
+    /** The index of the step being shown, or {@link SignalPlayback#NO_STEP}. */
+    ReadOnlyIntegerProperty activeStepProperty() {
+        return playback.activeStepProperty();
+    }
+
+    static String stageName(Stage stage) {
+        return STAGE_NAMES.get(stage);
+    }
+
+    private Button playButton() {
+        BooleanBinding playing = timeline.statusProperty().isEqualTo(Animation.Status.RUNNING);
+        Button play = controlButton("signal-play", this::togglePlaying);
+        play.textProperty().bind(Bindings.when(playing).then("Pause").otherwise("Play"));
+        play.disableProperty().bind(playback.activeStepProperty().isEqualTo(SignalPlayback.NO_STEP));
+        return play;
+    }
+
+    private Button stepButton() {
+        Button step = controlButton("signal-step-button", this::stepOnce);
+        step.setText("Step");
+        step.disableProperty().bind(playback.canAdvanceProperty().not());
+        return step;
+    }
+
+    private Node speedSelector() {
+        Node speedSelector = SettingsView.selector("signal-speed", SPEEDS, speed, SignalPathView::speedLabel);
+        speedSelector.setAccessibleText("Animation speed");
+        return speedSelector;
     }
 
     private static Button controlButton(String styleClass, Runnable action) {
@@ -132,8 +179,23 @@ public final class SignalPathView extends VBox {
         return timeline.getRate();
     }
 
+    boolean isPlaying() {
+        return timeline.getStatus() == Animation.Status.RUNNING;
+    }
+
+    /**
+     * A hidden view stops playing and does not start again for new letters, but it keeps showing the last trace,
+     * so the path can be replayed once the view is visible again.
+     */
+    void setActive(boolean isActive) {
+        active = isActive;
+        if (!isActive) {
+            timeline.stop();
+        }
+    }
+
     private void togglePlaying() {
-        if (timeline.getStatus() == Animation.Status.RUNNING) {
+        if (isPlaying()) {
             timeline.stop();
             return;
         }
@@ -163,7 +225,7 @@ public final class SignalPathView extends VBox {
         }
         playback.show(trace);
         refreshRows();
-        if (trace != null && !educationalMode.isSelected()) {
+        if (trace != null && active && !educationalMode.isSelected()) {
             timeline.playFromStart();
         }
     }
