@@ -172,6 +172,7 @@ public final class MainController {
 
     private void showMachineState() {
         viewModel.showRotorWindows(service.rotorWindows());
+        viewModel.showWiring(service.wiringSnapshot());
         viewModel.showResettable(
                 !service.atStartPositions() || !viewModel.inputTextProperty().get().isEmpty());
     }

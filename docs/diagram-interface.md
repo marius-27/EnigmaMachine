@@ -35,10 +35,17 @@ The forward signal travels right to left; the reflected signal returns left
 to right. Arrows and a textual step label accompany the colours. At the bottom
 of this area, Play, Pause, Step and speed control the trace replay.
 
-A side panel retains Messages, Settings and Signal access. The keyboard and
-lampboard remain below the diagram. At the existing minimum window size of
+A side panel retains Messages, Settings and Signal access. The keyboard
+remains below the diagram. At the existing minimum window size of
 860 by 600, the diagram may scroll; contacts remain readable and Mode stays
 visible. Do not fit all 26 contacts by shrinking the lettering below 12 px.
+A larger window enlarges the diagram to fill its area.
+
+Revised in stage 3: the static draft placed a separate lampboard below the
+diagram, which left the diagram about 80 px of height at the minimum window
+size. The keys column of the diagram now doubles as the lampboard and lights
+the output letter, and the keyboard keys are 36 px in this mode. Classic is
+unchanged and keeps its lampboard.
 
 ## Colour and motion specification
 
@@ -83,7 +90,7 @@ must use existing domain transforms rather than formulas copied into the UI.
   configuration is unchanged.
 - Switch while animating or holding a key: no extra encryption and no stuck key.
 - Backspace, Reset, Clear, Decrypt and JSON Save/Load work in either mode.
-- A trace ends at the letter shown in output and lampboard.
+- A trace ends at the letter shown in output and the lit key contact.
 - Inspect both views at 1100×760 and 860×600, including focus and scrolling.
 
 ## Stage 1 checklist

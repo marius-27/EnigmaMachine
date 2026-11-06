@@ -31,12 +31,23 @@ class AccessibilityTest {
                 List.of("-enigma-gold-bright", "-enigma-window"),
                 List.of("-enigma-lamp-off", "-enigma-window"),
                 List.of("-enigma-background", "-enigma-gold"),
-                List.of("-enigma-background", "-enigma-gold-bright"));
+                List.of("-enigma-background", "-enigma-gold-bright"),
+                List.of("-enigma-text", "-enigma-window"));
 
         for (List<String> pair : pairs) {
             double ratio = contrast(colors.get(pair.get(0)), colors.get(pair.get(1)));
             assertTrue(ratio >= READABLE_TEXT, pair + " has a contrast of only " + ratio);
         }
+    }
+
+    /** WCAG AA asks for 3:1 for lines and other graphics that carry meaning. */
+    @Test
+    void diagramWiresStandOutFromTheirPanels() throws IOException {
+        Map<String, String> colors = themeColors();
+
+        double ratio = contrast(colors.get("-enigma-wire"), colors.get("-enigma-window"));
+
+        assertTrue(ratio >= 3.0, "Wires have a contrast of only " + ratio);
     }
 
     @Test

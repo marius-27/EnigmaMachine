@@ -7,6 +7,7 @@
     -enigma-gold-bright: #f0cf63;
     -enigma-window: #17191c;
     -enigma-lamp-off: #8a8578;
+    -enigma-wire: #657080;
 
     -fx-base: -enigma-panel;
     -fx-background: -enigma-background;
@@ -255,10 +256,57 @@
 }
 
 /* Rules for the Diagram mode stay under its root class, so they cannot change the Classic view. */
-.diagram-view .diagram-area {
-    -fx-padding: 8;
+.diagram-view .diagram-scroll,
+.diagram-view .diagram-scroll > .viewport {
+    -fx-background-color: -enigma-panel;
 }
 
-.diagram-view .diagram-components {
+.diagram-view .diagram-panel {
+    -fx-fill: -enigma-window;
+    -fx-stroke: -enigma-border;
+    -fx-arc-width: 8;
+    -fx-arc-height: 8;
+}
+
+.diagram-view .diagram-heading {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -enigma-gold-bright;
+    -fx-text-alignment: center;
+}
+
+/* The specification asks for contact letters of at least 12px, scrolling instead of shrinking. */
+.diagram-view .diagram-contact {
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 12px;
     -fx-text-fill: -enigma-text;
+}
+
+.diagram-view .diagram-wire {
+    -fx-stroke: -enigma-wire;
+    -fx-stroke-width: 1;
+    -fx-fill: transparent;
+}
+
+.diagram-view .diagram-link {
+    -fx-stroke: -enigma-border;
+    -fx-stroke-width: 1;
+}
+
+/* The keys column is the lampboard of this mode: the output letter lights up like a lamp. */
+.diagram-view .diagram-keys .diagram-contact:lit {
+    -fx-background-color: -enigma-gold-bright;
+    -fx-background-radius: 8px;
+    -fx-text-fill: -enigma-background;
+    -fx-font-weight: bold;
+}
+
+/* Smaller keys leave the diagram most of the window. */
+.diagram-view .keyboard-key {
+    -fx-min-width: 36px;
+    -fx-min-height: 36px;
+    -fx-max-width: 36px;
+    -fx-max-height: 36px;
+    -fx-background-radius: 18px;
+    -fx-border-radius: 18px;
 }

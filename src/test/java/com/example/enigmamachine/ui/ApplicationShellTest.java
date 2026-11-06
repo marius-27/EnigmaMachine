@@ -153,8 +153,10 @@ class ApplicationShellTest {
             modeButton().fire();
 
             assertEquals(26, nodes(".keyboard-key").size());
-            assertEquals(26, nodes(".lamp").size());
-            assertNotNull(node(".rotor-window"));
+            // The keys column of the diagram is the lampboard of this mode.
+            assertTrue(nodes(".lamp").isEmpty());
+            assertEquals(26, nodes(".diagram-keys .diagram-contact").size());
+            assertNotNull(node(".wiring-diagram"));
             assertNotNull(node(".message-area"));
             assertNotNull(node(".rotor-selector"));
             assertNotNull(node(".signal-summary"));
