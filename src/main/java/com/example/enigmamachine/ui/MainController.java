@@ -8,6 +8,7 @@ import com.example.enigmamachine.persistence.ConfigurationFileException;
 import com.example.enigmamachine.persistence.ConfigurationRepository;
 import com.example.enigmamachine.persistence.JsonConfigurationRepository;
 import com.example.enigmamachine.ui.viewmodel.MachineViewModel;
+import com.example.enigmamachine.ui.viewmodel.PlaybackOptions;
 import com.example.enigmamachine.ui.viewmodel.SettingsViewModel;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -16,6 +17,7 @@ public final class MainController {
 
     private final EnigmaService service;
     private final MachineViewModel viewModel = new MachineViewModel();
+    private final PlaybackOptions playbackOptions = new PlaybackOptions();
     private final SettingsViewModel settings;
     private final ConfigurationRepository repository;
 
@@ -36,6 +38,11 @@ public final class MainController {
 
     public SettingsViewModel settings() {
         return settings;
+    }
+
+    /** How signal paths are played; the same in every view of the session. */
+    public PlaybackOptions playbackOptions() {
+        return playbackOptions;
     }
 
     /** Saves the settings shown in the editors, reporting the result instead of throwing. */
@@ -172,6 +179,7 @@ public final class MainController {
 
     private void showMachineState() {
         viewModel.showRotorWindows(service.rotorWindows());
+        viewModel.showWiring(service.wiringSnapshot());
         viewModel.showResettable(
                 !service.atStartPositions() || !viewModel.inputTextProperty().get().isEmpty());
     }

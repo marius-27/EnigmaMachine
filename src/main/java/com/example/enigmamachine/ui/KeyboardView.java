@@ -8,19 +8,18 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
 /**
- * The A-Z keyboard, in the historical Enigma layout. It accepts both mouse clicks and the physical keyboard.
+ * The A-Z keyboard, in the historical Enigma layout. It accepts both mouse clicks and the physical keyboard,
+ * which reaches it through {@link SceneInput} while its view is the active one.
  */
-public final class KeyboardView extends VBox {
+public final class KeyboardView extends VBox implements KeyInputTarget {
 
     static final List<String> ROWS =List.of("QWERTZUIO", "ASDFGHJK", "PYXCVBNML");
     private static final double SPACING = 8;
@@ -57,20 +56,6 @@ public final class KeyboardView extends VBox {
         onPastePressed = Objects.requireNonNull(handler, "Paste handler is required.");
     }
 
-    /** Listens to the physical keyboard while the given stage has its scene shown. */
-    public void attachTo(Stage stage) {
-        Scene scene = stage.getScene();
-        // A filter runs before the focused control, and a focused text area would otherwise swallow the keys.
-        scene.addEventFilter(KeyEvent.KEY_PRESSED, this::handlePhysicalPress);
-        scene.addEventFilter(KeyEvent.KEY_RELEASED, this::handlePhysicalRelease);
-        // A key released in another window sends no event here and would otherwise stay held forever.
-        stage.focusedProperty().addListener((observable, wasFocused, isFocused) -> {
-            if (!isFocused) {
-                releaseAllPhysicalKeys();
-            }
-        });
-    }
-
     private Button createKey(char letter) {
         Button key = new Button(String.valueOf(letter));
         key.getStyleClass().add("keyboard-key");
@@ -85,7 +70,8 @@ public final class KeyboardView extends VBox {
         return key;
     }
 
-    private void handlePhysicalPress(KeyEvent event) {
+    @Override
+    public void keyPressed(KeyEvent event) {
         if (event.getCode() == KeyCode.BACK_SPACE) {
             // Unlike a letter, Backspace keeps deleting while it is held down.
             if (!event.isControlDown() && !event.isAltDown() && !event.isMetaDown()) {
@@ -108,12 +94,14 @@ public final class KeyboardView extends VBox {
         });
     }
 
-    private void handlePhysicalRelease(KeyEvent event) {
+    @Override
+    public void keyReleased(KeyEvent event) {
         physicalKeys.release(event.getCode())
                 .ifPresent(letter -> keys.get(letter).pseudoClassStateChanged(HELD, false));
     }
 
-    private void releaseAllPhysicalKeys() {
+    @Override
+    public void releaseAllKeys() {
         physicalKeys.releaseAll();
         keys.values().forEach(key -> key.pseudoClassStateChanged(HELD, false));
     }

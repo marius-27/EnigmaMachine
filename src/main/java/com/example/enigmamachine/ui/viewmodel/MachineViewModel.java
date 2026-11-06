@@ -1,6 +1,7 @@
 package com.example.enigmamachine.ui.viewmodel;
 
 import com.example.enigmamachine.domain.SignalTrace;
+import com.example.enigmamachine.domain.WiringSnapshot;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -15,6 +16,7 @@ public final class MachineViewModel {
     private final ReadOnlyStringWrapper outputText = new ReadOnlyStringWrapper("");
     private final ReadOnlyStringWrapper litLamp = new ReadOnlyStringWrapper("");
     private final ReadOnlyObjectWrapper<SignalTrace> lastTrace = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<WiringSnapshot> wiring = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyStringWrapper status = new ReadOnlyStringWrapper("");
     private final ReadOnlyBooleanWrapper resettable = new ReadOnlyBooleanWrapper(false);
 
@@ -56,6 +58,15 @@ public final class MachineViewModel {
 
     public void showResettable(boolean canReset) {
         resettable.set(canReset);
+    }
+
+    /** Where every contact of the running machine leads, for drawing its wires; null before the first update. */
+    public ReadOnlyObjectProperty<WiringSnapshot> wiringProperty() {
+        return wiring.getReadOnlyProperty();
+    }
+
+    public void showWiring(WiringSnapshot snapshot) {
+        wiring.set(snapshot);
     }
 
     public void showLastTrace(SignalTrace trace) {

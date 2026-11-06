@@ -767,7 +767,7 @@ class MainViewInputTest {
             keyboard.setOnPastePressed(() -> pastes[0]++);
             Stage stage = new Stage();
             stage.setScene(new Scene(keyboard));
-            keyboard.attachTo(stage);
+            SceneInput.installOn(stage).setKeyTarget(keyboard);
             Scene keyboardScene = stage.getScene();
 
             KeyEvent ctrlV = new KeyEvent(KeyEvent.KEY_PRESSED, "v", "v", KeyCode.V, false, true, false, false);
@@ -853,7 +853,7 @@ class MainViewInputTest {
         scene = new Scene(view);
         Stage stage = new Stage();
         stage.setScene(scene);
-        view.attachTo(stage);
+        view.activate(SceneInput.installOn(stage));
         // Creates the control skins, which is where a text area starts to consume key events.
         view.applyCss();
     }

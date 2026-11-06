@@ -4,6 +4,7 @@ import com.example.enigmamachine.domain.Alphabet;
 import com.example.enigmamachine.domain.EnigmaMachine;
 import com.example.enigmamachine.domain.MachineConfiguration;
 import com.example.enigmamachine.domain.SignalTrace;
+import com.example.enigmamachine.domain.WiringSnapshot;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -64,6 +65,11 @@ public final class EnigmaService {
     public void reset() {
         machine.reset();
         positionsBeforeLetters.clear();
+    }
+
+    /** Where every contact of the running machine leads right now. */
+    public WiringSnapshot wiringSnapshot() {
+        return machine.wiringSnapshot();
     }
 
     public String rotorWindows() {

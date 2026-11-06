@@ -4,8 +4,9 @@ import com.example.enigmamachine.domain.MachineConfiguration;
 import com.example.enigmamachine.domain.Reflector;
 import com.example.enigmamachine.domain.RotorDefinition;
 import com.example.enigmamachine.engine.EnigmaService;
+import com.example.enigmamachine.ui.ApplicationShell;
 import com.example.enigmamachine.ui.MainController;
-import com.example.enigmamachine.ui.MainView;
+import com.example.enigmamachine.ui.SceneInput;
 import com.example.enigmamachine.ui.UnexpectedErrorHandler;
 import java.util.List;
 import java.util.Objects;
@@ -31,14 +32,14 @@ public class App extends Application {
     public void start(Stage stage) {
         MainController controller = new MainController(new EnigmaService(DEFAULT_CONFIGURATION));
 
-        MainView view = new MainView(controller);
-        Scene scene = new Scene(view, WIDTH, HEIGHT);
+        ApplicationShell shell = new ApplicationShell(controller);
+        Scene scene = new Scene(shell, WIDTH, HEIGHT);
         scene.getStylesheets().add(Objects.requireNonNull(App.class.getResource(STYLESHEET)).toExternalForm());
 
         Thread.setDefaultUncaughtExceptionHandler(new UnexpectedErrorHandler(stage));
         stage.setTitle("Enigma M3");
         stage.setScene(scene);
-        view.attachTo(stage);
+        shell.activate(SceneInput.installOn(stage));
         stage.setMinWidth(MIN_WIDTH);
         stage.setMinHeight(MIN_HEIGHT);
         stage.show();

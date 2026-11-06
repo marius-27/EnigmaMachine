@@ -5,6 +5,8 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 
 /**
  * Which step of a finished signal trace is being shown. The letter is already encrypted when playback
@@ -16,7 +18,12 @@ public final class SignalPlayback {
 
     private final ReadOnlyIntegerWrapper activeStep = new ReadOnlyIntegerWrapper(NO_STEP);
     private final ReadOnlyBooleanWrapper canAdvance = new ReadOnlyBooleanWrapper(false);
-    private SignalTrace trace;
+    private final ReadOnlyObjectWrapper<SignalTrace> trace = new ReadOnlyObjectWrapper<>();
+
+    /** The trace being played, or null when there is none. */
+    public ReadOnlyObjectProperty<SignalTrace> traceProperty() {
+        return trace.getReadOnlyProperty();
+    }
 
     /** The index of the step being shown, or {@link #NO_STEP} when there is no trace. */
     public ReadOnlyIntegerProperty activeStepProperty() {
@@ -30,13 +37,13 @@ public final class SignalPlayback {
 
     /** Starts over at the first step of the given trace, or shows nothing for null. */
     public void show(SignalTrace newTrace) {
-        trace = newTrace;
+        trace.set(newTrace);
         moveTo(newTrace == null ? NO_STEP : 0);
     }
 
     /** Goes back to the first step of the current trace. */
     public void restart() {
-        if (trace != null) {
+        if (trace.get() != null) {
             moveTo(0);
         }
     }
@@ -51,7 +58,7 @@ public final class SignalPlayback {
     }
 
     private void moveTo(int step) {
-        canAdvance.set(trace != null && step < trace.steps().size() - 1);
+        canAdvance.set(trace.get() != null && step < trace.get().steps().size() - 1);
         activeStep.set(step);
     }
 }

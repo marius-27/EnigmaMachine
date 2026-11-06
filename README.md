@@ -12,8 +12,9 @@ A desktop simulator of the three-rotor Enigma M3, built to be historically accur
 - Settings are edited apart from the running machine and take effect only when applied.
 - Settings can be saved to and loaded from JSON files.
 - An animated signal path shows every component a letter passes through, with an educational step-by-step mode.
+- Two interface modes in the same window: **Classic**, with the rotor windows and lampboard, and **Diagram**, which draws every contact and wire of the reflector, rotors and plugboard and lights the path of each letter.
 - Every action has a keyboard shortcut. Lamps, rotors and plugboard sockets are described for screen readers.
-- Checked against real messages from 1941 by an automated test suite of more than 300 tests.
+- Checked against real messages from 1941 by an automated test suite of more than 400 tests.
 
 ## Requirements
 
@@ -128,12 +129,32 @@ The **Signal** tab replays the path of the last letter: plugboard, the three rot
 
 The letter is already encrypted when the replay starts, so none of these controls can change the result.
 
+### Switch between Classic and Diagram
+
+![Diagram mode on the way back from the reflector, with the 1941 message decrypted](docs/screenshots/diagram-mode.png)
+
+The **Mode** button at the top right, or **Ctrl+M**, switches the window between **Classic** and **Diagram**. The label next to the title shows the active mode, and the button's tooltip names the other one. The application starts in Classic.
+
+Both modes are views of the same machine. Switching keeps the messages, the rotor positions, the Backspace history, the settings being edited, including ones not applied yet, and the educational mode and speed. It never encrypts a letter, steps a rotor or applies the settings. A key held down while switching types nothing more until it is released.
+
+Diagram mode shows, from left to right, the reflector, the left, middle and right rotors, the plugboard and the keys:
+
+- Each component lists its contacts A-Z. The headings show the rotor in each slot with its position and ring setting, the reflector and the number of plugboard pairs.
+- The wires are the machine's real wiring at its current positions, so they change after every letter, Backspace, Reset or Apply.
+- The keys column is the lampboard of this mode: the output letter lights up and the typed letter is outlined.
+- The path of the last letter is lit step by step, in the order of the Signal tab. The way in is **yellow, solid, with arrows to the left**; the way back is **blue, dashed, with arrows to the right**, so the direction does not depend on colour alone. The line under the diagram describes the step, for example `Step 7 of 9 · Return → · Middle rotor, back: E → M`.
+- **Play**, **Step**, the speed and **Educational** under the diagram control the same replay as the Signal tab.
+- A large window enlarges the diagram. A small one scrolls it instead of shrinking its letters, and follows the step being shown.
+
+The diagram is inspired by the "Enciphering a letter" section of [Coding the Enigma machine - Part 1](https://www.youtube.com/watch?v=sbm2dmkmqgQ&t=1448s) by Coding Cassowary. It is an independent layout, not a copy of the video. The design notes are in [docs/diagram-interface.md](docs/diagram-interface.md).
+
 ### Keyboard shortcuts
 
 The buttons are deliberately left out of the Tab focus order, because a focused button would react to Space while a message is being typed. Use these shortcuts instead. On macOS, use Cmd instead of Ctrl.
 
 | Shortcut | Action |
 |---|---|
+| Ctrl+M | Switch between Classic and Diagram |
 | Ctrl+1, Ctrl+2, Ctrl+3 | Show the Messages, Settings or Signal tab |
 | Ctrl+D | Decrypt |
 | Ctrl+L | Clear |
@@ -193,9 +214,11 @@ The code is split into layers, and each one depends only on the layers below it:
 flowchart TD
     App["App, Launcher<br/>start JavaFX"] --> UI
     subgraph UI["ui"]
-        Views["Views<br/>MainView, KeyboardView, LampboardView,<br/>RotorWindowsView, MessagesView, SettingsView,<br/>PlugboardView, SignalPathView"]
+        Shell["ApplicationShell, SceneInput<br/>Mode button, one keyboard listener"]
+        Views["Views<br/>MainView (Classic), DiagramView, WiringDiagramView,<br/>KeyboardView, LampboardView, RotorWindowsView,<br/>MessagesView, SettingsView, PlugboardView, SignalPathView"]
         Controller["MainController"]
-        ViewModels["viewmodel<br/>MachineViewModel, SettingsViewModel, SignalPlayback"]
+        ViewModels["viewmodel<br/>MachineViewModel, SettingsViewModel,<br/>SignalPlayback, PlaybackOptions"]
+        Shell --> Views
         Views --> Controller
         Views --> ViewModels
         Controller --> ViewModels
@@ -225,7 +248,8 @@ flowchart TD
 | `domain.MachineConfiguration` | Immutable, validated initial settings: rotors, reflector, rings, positions and plugboard |
 | `domain.SteppingMechanism` | Steps the rotors before each letter, including the double step |
 | `domain.EnigmaMachine` | Runs a letter through the whole machine and reports its `SignalTrace` |
-| `domain.SignalTrace` | Every component one letter crossed, used by the Signal tab |
+| `domain.SignalTrace` | Every component one letter crossed, used by the Signal tab and the diagram |
+| `domain.WiringSnapshot` | Where every contact leads at the current positions, worked out by the components themselves so the diagram copies no formula |
 | `engine.EnigmaService` | The running machine, with the rotor positions before each letter so Backspace can undo it |
 | `persistence.ConfigurationFile` | The JSON file format, with a format version |
 | `persistence.JsonConfigurationRepository` | Reads and writes the files with Jackson, replacing a file only after the new one is fully written |
@@ -233,6 +257,10 @@ flowchart TD
 | `ui.viewmodel.MachineViewModel` | Messages, lamp, rotor windows and status shown by the views |
 | `ui.viewmodel.SettingsViewModel` | The settings being edited, kept apart from the running machine until applied |
 | `ui.viewmodel.SignalPlayback` | Which step of the signal path is shown |
+| `ui.viewmodel.PlaybackOptions` | Educational mode and speed, shared by both modes |
+| `ui.ApplicationShell` | The header with the Mode button, and the view of the active mode |
+| `ui.SceneInput` | Listens to the physical keyboard once per window and gives it, with the shortcuts, to the active view only |
+| `ui.DiagramView`, `ui.WiringDiagramView` | Diagram mode: the contacts, wires and lit signal path |
 | `ui.Shortcuts` | The keyboard shortcuts of the buttons |
 | `ui.UnexpectedErrorHandler` | Shows an unexpected error as a dialog instead of a stack trace |
 
@@ -262,6 +290,7 @@ The tests cover the engine, the settings, the file format and the interface:
 - **Engine:** rotor wiring, reflector symmetry, plugboard rules, turnover and double stepping, and real messages from 1941.
 - **Settings and files:** validation, apply and reset, a JSON round trip of 500 random configurations, and damaged, incompatible or locked files.
 - **Interface:** key and mouse events sent through the real view without opening a window, keyboard shortcuts and screen reader descriptions.
+- **Modes:** repeated switching never encrypts twice or loses state, held keys and lost focus, and the drawn wires and lit path match the engine at every step, including all 26 × 26 positions and ring settings of a rotor.
 - **Accessibility:** the theme colours are checked against the WCAG AA contrast ratio.
 
 ## Technologies
