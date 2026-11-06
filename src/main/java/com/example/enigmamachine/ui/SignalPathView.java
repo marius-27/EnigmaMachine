@@ -60,6 +60,7 @@ public final class SignalPathView extends VBox {
     private final CheckBox educationalMode = new CheckBox("Educational mode");
     private final ObjectProperty<Double> speed = new SimpleObjectProperty<>(NORMAL_SPEED);
     private final Timeline timeline;
+    private boolean active = true;
 
     public SignalPathView(ObservableValue<SignalTrace> lastTrace, Shortcuts shortcuts) {
         super(SPACING);
@@ -132,8 +133,23 @@ public final class SignalPathView extends VBox {
         return timeline.getRate();
     }
 
+    boolean isPlaying() {
+        return timeline.getStatus() == Animation.Status.RUNNING;
+    }
+
+    /**
+     * A hidden view stops playing and does not start again for new letters, but it keeps showing the last trace,
+     * so the path can be replayed once the view is visible again.
+     */
+    void setActive(boolean isActive) {
+        active = isActive;
+        if (!isActive) {
+            timeline.stop();
+        }
+    }
+
     private void togglePlaying() {
-        if (timeline.getStatus() == Animation.Status.RUNNING) {
+        if (isPlaying()) {
             timeline.stop();
             return;
         }
@@ -163,7 +179,7 @@ public final class SignalPathView extends VBox {
         }
         playback.show(trace);
         refreshRows();
-        if (trace != null && !educationalMode.isSelected()) {
+        if (trace != null && active && !educationalMode.isSelected()) {
             timeline.playFromStart();
         }
     }

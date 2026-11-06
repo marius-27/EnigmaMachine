@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCombination;
@@ -42,11 +41,8 @@ final class Shortcuts {
         return combination;
     }
 
+    /** The shortcuts and their actions; {@link SceneInput} puts them on the scene while their view is active. */
     Map<KeyCombination, Runnable> actions() {
         return Collections.unmodifiableMap(actions);
-    }
-
-    void installOn(Scene scene) {
-        scene.getAccelerators().putAll(actions);
     }
 }

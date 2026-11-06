@@ -10,17 +10,20 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
-public final class MainView extends BorderPane {
+/** The classic interface: the machine in the middle and the messages, settings and signal path at the side. */
+public final class MainView extends BorderPane implements SwitchableView {
 
     private static final double SPACING = 12;
     private static final double SIDE_PANEL_WIDTH = 320;
 
     private final KeyboardView keyboardView = new KeyboardView();
     private final Shortcuts shortcuts = new Shortcuts();
+    private final SignalPathView signalPathView;
+    private SceneInput input;
 
     public MainView(MainController controller) {
+        signalPathView = new SignalPathView(controller.viewModel().lastTraceProperty(), shortcuts);
         keyboardView.setOnLetterPressed(controller::pressKey);
         keyboardView.setOnBackspacePressed(controller::deleteLastLetter);
         keyboardView.setOnPastePressed(() -> controller.pasteText(Clipboard.getSystemClipboard().getString()));
@@ -37,7 +40,7 @@ public final class MainView extends BorderPane {
         TabPane sidePanel = new TabPane(
                 tab("Messages", new MessagesView(controller, shortcuts)),
                 tab("Settings", scrolling(new SettingsView(controller, shortcuts))),
-                tab("Signal", scrolling(new SignalPathView(controller.viewModel().lastTraceProperty(), shortcuts))));
+                tab("Signal", scrolling(signalPathView)));
         sidePanel.setPrefWidth(SIDE_PANEL_WIDTH);
         setMargin(sidePanel, new Insets(0, 0, 0, SPACING));
         for (int index = 0; index < sidePanel.getTabs().size(); index++) {
@@ -50,10 +53,26 @@ public final class MainView extends BorderPane {
         setPadding(new Insets(SPACING));
     }
 
-    /** Connects the physical keyboard and the shortcuts; call after the stage has its scene. */
-    public void attachTo(Stage stage) {
-        keyboardView.attachTo(stage);
-        shortcuts.installOn(stage.getScene());
+    @Override
+    public void activate(SceneInput sceneInput) {
+        if (input != null) {
+            return;
+        }
+        input = sceneInput;
+        input.setKeyTarget(keyboardView);
+        input.setShortcuts(shortcuts);
+        signalPathView.setActive(true);
+    }
+
+    @Override
+    public void deactivate() {
+        if (input == null) {
+            return;
+        }
+        input.clearKeyTarget(keyboardView);
+        input.clearShortcuts(shortcuts);
+        input = null;
+        signalPathView.setActive(false);
     }
 
     private static Tab tab(String title, Node content) {
