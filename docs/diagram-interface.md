@@ -102,7 +102,19 @@ must use existing domain transforms rather than formulas copied into the UI.
 - [x] Define the implementation composition in the static layout and this specification.
 
 Stage 1 is complete as a design specification. Exact visual fidelity to the
-video has not been verified and is not claimed by this checklist. Stages 2–6
-remain unimplemented.
+video has not been verified and is not claimed by this checklist.
 
-No application code, dependencies or encryption behaviour change in this stage.
+## Implementation status
+
+Stages 2–6 are implemented: the shared input and Mode switch, the static
+diagram, the animated signal path, the mode-switching tests, the layout and
+accessibility refinements, and the README section. Differences from the
+draft above:
+
+- Diagram mode has no separate lampboard; the keys column lights the output
+  letter (see Layout).
+- Contacts sit 14 px apart with 12 px letters, so the whole diagram fits at
+  1100 × 760. At the minimum window size it scrolls and follows the step
+  being shown.
+- The replay controls under the diagram drive the same playback as the
+  Signal tab, and the educational mode and speed are shared by both modes.
