@@ -37,6 +37,10 @@ public abstract class MachineView extends BorderPane implements SwitchableView {
         return shortcuts;
     }
 
+    final SignalPathView signalPathView() {
+        return signalPathView;
+    }
+
     @Override
     public final void activate(SceneInput sceneInput) {
         if (input != null) {

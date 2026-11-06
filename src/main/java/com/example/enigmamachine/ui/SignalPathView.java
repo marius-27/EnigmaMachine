@@ -15,6 +15,8 @@ import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.css.PseudoClass;
@@ -85,18 +87,8 @@ public final class SignalPathView extends VBox {
     }
 
     private Node controls(Shortcuts shortcuts) {
-        BooleanBinding playing = timeline.statusProperty().isEqualTo(Animation.Status.RUNNING);
-
-        Button play = controlButton("signal-play", this::togglePlaying);
-        play.textProperty().bind(Bindings.when(playing).then("Pause").otherwise("Play"));
-        play.disableProperty().bind(playback.activeStepProperty().isEqualTo(SignalPlayback.NO_STEP));
-
-        Button step = controlButton("signal-step-button", this::stepOnce);
-        step.setText("Step");
-        step.disableProperty().bind(playback.canAdvanceProperty().not());
-
-        Node speedSelector = SettingsView.selector("signal-speed", SPEEDS, speed, SignalPathView::speedLabel);
-        speedSelector.setAccessibleText("Animation speed");
+        Button play = playButton();
+        Button step = stepButton();
 
         educationalMode.getStyleClass().add("signal-educational");
         educationalMode.setTooltip(new Tooltip("Each new letter waits at its first step until you press Play or Step."));
@@ -112,11 +104,63 @@ public final class SignalPathView extends VBox {
         shortcuts.add("Shortcut+N", step);
         shortcuts.add("Shortcut+E", educationalMode);
 
-        HBox buttons = new HBox(8, play, step, new Label("Speed"), speedSelector);
+        HBox buttons = new HBox(8, play, step, new Label("Speed"), speedSelector());
         buttons.setAlignment(Pos.CENTER_LEFT);
         VBox controls = new VBox(8, buttons, educationalMode);
         controls.setPadding(new Insets(8, 0, 0, 0));
         return controls;
+    }
+
+    /**
+     * A second set of the same controls, for a view that shows the path somewhere else. It drives this playback,
+     * so both sets always agree; the shortcuts stay with the first set, so a key press acts only once.
+     */
+    Node replayBar() {
+        CheckBox educational = new CheckBox("Educational");
+        educational.getStyleClass().add("signal-educational");
+        educational.setTooltip(new Tooltip(educationalMode.getTooltip().getText()));
+        educational.setFocusTraversable(false);
+        educational.selectedProperty().bindBidirectional(educationalMode.selectedProperty());
+
+        HBox bar = new HBox(8, playButton(), stepButton(), new Label("Speed"), speedSelector(), educational);
+        bar.getStyleClass().add("signal-replay-bar");
+        bar.setAlignment(Pos.CENTER_LEFT);
+        return bar;
+    }
+
+    /** The trace being played, or null when there is none. */
+    ReadOnlyObjectProperty<SignalTrace> shownTraceProperty() {
+        return playback.traceProperty();
+    }
+
+    /** The index of the step being shown, or {@link SignalPlayback#NO_STEP}. */
+    ReadOnlyIntegerProperty activeStepProperty() {
+        return playback.activeStepProperty();
+    }
+
+    static String stageName(Stage stage) {
+        return STAGE_NAMES.get(stage);
+    }
+
+    private Button playButton() {
+        BooleanBinding playing = timeline.statusProperty().isEqualTo(Animation.Status.RUNNING);
+        Button play = controlButton("signal-play", this::togglePlaying);
+        play.textProperty().bind(Bindings.when(playing).then("Pause").otherwise("Play"));
+        play.disableProperty().bind(playback.activeStepProperty().isEqualTo(SignalPlayback.NO_STEP));
+        return play;
+    }
+
+    private Button stepButton() {
+        Button step = controlButton("signal-step-button", this::stepOnce);
+        step.setText("Step");
+        step.disableProperty().bind(playback.canAdvanceProperty().not());
+        return step;
+    }
+
+    private Node speedSelector() {
+        Node speedSelector = SettingsView.selector("signal-speed", SPEEDS, speed, SignalPathView::speedLabel);
+        speedSelector.setAccessibleText("Animation speed");
+        return speedSelector;
     }
 
     private static Button controlButton(String styleClass, Runnable action) {

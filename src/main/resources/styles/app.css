@@ -8,6 +8,8 @@
     -enigma-window: #17191c;
     -enigma-lamp-off: #8a8578;
     -enigma-wire: #657080;
+    -enigma-forward: #f4c95d;
+    -enigma-return: #66d9ef;
 
     -fx-base: -enigma-panel;
     -fx-background: -enigma-background;
@@ -309,4 +311,41 @@
     -fx-max-height: 36px;
     -fx-background-radius: 18px;
     -fx-border-radius: 18px;
+}
+
+/* The signal path: solid on the way in, dashed on the way back, so direction does not rest on colour alone. */
+.diagram-view .diagram-wire:forward,
+.diagram-view .diagram-link:forward {
+    -fx-stroke: -enigma-forward;
+    -fx-stroke-width: 2;
+}
+
+.diagram-view .diagram-wire:return,
+.diagram-view .diagram-link:return {
+    -fx-stroke: -enigma-return;
+    -fx-stroke-width: 2;
+    -fx-stroke-dash-array: 6 3;
+}
+
+.diagram-view .diagram-wire:current {
+    -fx-stroke-width: 3;
+}
+
+.diagram-view .diagram-arrow:forward {
+    -fx-fill: -enigma-forward;
+}
+
+.diagram-view .diagram-arrow:return {
+    -fx-fill: -enigma-return;
+}
+
+/* The key the letter was typed on keeps an outline while its signal is followed. */
+.diagram-view .diagram-keys .diagram-contact:entered {
+    -fx-border-color: -enigma-forward;
+    -fx-border-radius: 8px;
+}
+
+.diagram-view .diagram-step {
+    -fx-font-weight: bold;
+    -fx-text-fill: -enigma-gold-bright;
 }

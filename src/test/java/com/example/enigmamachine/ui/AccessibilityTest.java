@@ -45,9 +45,10 @@ class AccessibilityTest {
     void diagramWiresStandOutFromTheirPanels() throws IOException {
         Map<String, String> colors = themeColors();
 
-        double ratio = contrast(colors.get("-enigma-wire"), colors.get("-enigma-window"));
-
-        assertTrue(ratio >= 3.0, "Wires have a contrast of only " + ratio);
+        for (String wire : List.of("-enigma-wire", "-enigma-forward", "-enigma-return")) {
+            double ratio = contrast(colors.get(wire), colors.get("-enigma-window"));
+            assertTrue(ratio >= 3.0, wire + " has a contrast of only " + ratio);
+        }
     }
 
     @Test
