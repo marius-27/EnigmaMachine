@@ -18,7 +18,8 @@ public abstract class MachineView extends BorderPane implements SwitchableView {
 
     MachineView(MainController controller, String styleClass) {
         getStyleClass().add(styleClass);
-        signalPathView = new SignalPathView(controller.viewModel().lastTraceProperty(), shortcuts);
+        signalPathView = new SignalPathView(
+                controller.viewModel().lastTraceProperty(), controller.playbackOptions(), shortcuts);
         keyboardView.setOnLetterPressed(controller::pressKey);
         keyboardView.setOnBackspacePressed(controller::deleteLastLetter);
         keyboardView.setOnPastePressed(() -> controller.pasteText(Clipboard.getSystemClipboard().getString()));

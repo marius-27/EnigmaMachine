@@ -4,6 +4,7 @@ import com.example.enigmamachine.domain.Alphabet;
 import com.example.enigmamachine.domain.SignalTrace;
 import com.example.enigmamachine.domain.SignalTrace.Stage;
 import com.example.enigmamachine.domain.SignalTrace.Step;
+import com.example.enigmamachine.ui.viewmodel.PlaybackOptions;
 import com.example.enigmamachine.ui.viewmodel.SignalPlayback;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,6 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -42,7 +42,6 @@ public final class SignalPathView extends VBox {
     private static final double SPACING = 4;
     private static final Duration STEP_DURATION = Duration.millis(300);
     private static final List<Double> SPEEDS = List.of(0.5, 1.0, 2.0, 4.0);
-    private static final double NORMAL_SPEED = 1.0;
     private static final PseudoClass ACTIVE = PseudoClass.getPseudoClass("active");
     private static final String NO_TRACE = "Press a key to see its signal path.";
     private static final Map<Stage, String> STAGE_NAMES = Map.of(
@@ -60,11 +59,11 @@ public final class SignalPathView extends VBox {
     private final Label summary = new Label(NO_TRACE);
     private final List<StepRow> rows = new ArrayList<>();
     private final CheckBox educationalMode = new CheckBox("Educational mode");
-    private final ObjectProperty<Double> speed = new SimpleObjectProperty<>(NORMAL_SPEED);
+    private final ObjectProperty<Double> speed;
     private final Timeline timeline;
     private boolean active;
 
-    public SignalPathView(ObservableValue<SignalTrace> lastTrace, Shortcuts shortcuts) {
+    public SignalPathView(ObservableValue<SignalTrace> lastTrace, PlaybackOptions options, Shortcuts shortcuts) {
         super(SPACING);
         setPadding(new Insets(8));
         summary.getStyleClass().add("signal-summary");
@@ -78,7 +77,10 @@ public final class SignalPathView extends VBox {
 
         timeline = new Timeline(new KeyFrame(STEP_DURATION, event -> playNextStep()));
         timeline.setCycleCount(Animation.INDEFINITE);
+        speed = options.speedProperty();
+        timeline.setRate(speed.get());
         speed.addListener((observable, previous, current) -> timeline.setRate(current));
+        educationalMode.selectedProperty().bindBidirectional(options.educationalProperty());
 
         getChildren().add(controls(shortcuts));
 
