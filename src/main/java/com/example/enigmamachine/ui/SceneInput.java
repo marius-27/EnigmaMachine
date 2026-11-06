@@ -44,9 +44,7 @@ public final class SceneInput {
     // A key released in another window sends no event here and would otherwise stay held forever.
     private final ChangeListener<Boolean> focusListener = (observable, wasFocused, isFocused) -> {
         if (!isFocused) {
-            heldKeys.clear();
-            blockedKeys.clear();
-            target().releaseAllKeys();
+            windowLostFocus();
         }
     };
     private KeyInputTarget target = NO_TARGET;
@@ -84,6 +82,13 @@ public final class SceneInput {
         if (target == oldTarget) {
             handOverTo(NO_TARGET);
         }
+    }
+
+    /** Every key counts as released, because their releases go to the window that now has the focus. */
+    void windowLostFocus() {
+        heldKeys.clear();
+        blockedKeys.clear();
+        target.releaseAllKeys();
     }
 
     private void handOverTo(KeyInputTarget newTarget) {
@@ -149,10 +154,6 @@ public final class SceneInput {
         scene.removeEventFilter(KeyEvent.KEY_RELEASED, releaseFilter);
         stage.focusedProperty().removeListener(focusListener);
         disposed = true;
-    }
-
-    private KeyInputTarget target() {
-        return target;
     }
 
     private void removeShortcuts() {

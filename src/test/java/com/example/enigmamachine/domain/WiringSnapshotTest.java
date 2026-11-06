@@ -72,6 +72,33 @@ class WiringSnapshotTest {
         assertEquals(2, new EnigmaMachine(atB).wiringSnapshot().rotors().get(2).forward().get(0));
     }
 
+    /**
+     * Checks every position against every ring setting with the textbook formula, written out here on its own:
+     * the signal shifts in by the offset, crosses the fixed wiring and shifts back out.
+     */
+    @Test
+    void everyPositionAndRingMatchesTheTextbookFormula() {
+        String wiring = RotorDefinition.III.wiring();
+        for (int position = 0; position < Alphabet.SIZE; position++) {
+            for (int ring = 0; ring < Alphabet.SIZE; ring++) {
+                MachineConfiguration configuration = new MachineConfiguration(
+                        List.of(RotorDefinition.I, RotorDefinition.II, RotorDefinition.III),
+                        Reflector.B,
+                        List.of(0, 0, ring),
+                        List.of(0, 0, position),
+                        List.of());
+                List<Integer> drawn = new EnigmaMachine(configuration).wiringSnapshot().rotors().get(2).forward();
+
+                int offset = position - ring;
+                for (int contact = 0; contact < Alphabet.SIZE; contact++) {
+                    int entered = Math.floorMod(contact + offset, Alphabet.SIZE);
+                    int expected = Math.floorMod(wiring.charAt(entered) - 'A' - offset, Alphabet.SIZE);
+                    assertEquals(expected, drawn.get(contact), "position " + position + ", ring " + ring);
+                }
+            }
+        }
+    }
+
     @Test
     void plugboardWiringSwapsThePairsBothWays() {
         List<Integer> plugboard = new EnigmaMachine(BARBAROSSA).wiringSnapshot().plugboardWiring();
