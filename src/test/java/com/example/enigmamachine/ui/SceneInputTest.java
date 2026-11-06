@@ -112,10 +112,50 @@ class SceneInputTest {
             view.deactivate();
             assertFalse(isHeld(key));
             view.activate(input);
-            // The release happened while the view was hidden, so a new press must count as a new letter.
+            release(KeyCode.H);
             press(KeyCode.H, "h");
 
             assertEquals("HH", controller.viewModel().inputTextProperty().get());
+        });
+    }
+
+    @Test
+    void keyHeldWhileTheViewChangesTypesNothingUntilItIsReleased() {
+        onFxThread(() -> {
+            press(KeyCode.H, "h");
+            view.deactivate();
+            view.activate(input);
+
+            press(KeyCode.H, "h");
+            press(KeyCode.H, "h");
+            assertEquals("H", controller.viewModel().inputTextProperty().get());
+
+            release(KeyCode.H);
+            press(KeyCode.H, "h");
+            assertEquals("HH", controller.viewModel().inputTextProperty().get());
+        });
+    }
+
+    @Test
+    void otherKeysStillTypeWhileABlockedKeyIsHeld() {
+        onFxThread(() -> {
+            press(KeyCode.H, "h");
+            view.deactivate();
+            view.activate(input);
+
+            tap(KeyCode.E, "e");
+
+            assertEquals("HE", controller.viewModel().inputTextProperty().get());
+        });
+    }
+
+    @Test
+    void windowShortcutsCannotTakeTheKeysOfAView() {
+        onFxThread(() -> {
+            Shortcuts window = new Shortcuts();
+            window.add("Shortcut+D", () -> { });
+
+            assertThrows(IllegalArgumentException.class, () -> input.setWindowShortcuts(window));
         });
     }
 
@@ -243,6 +283,10 @@ class SceneInputTest {
 
     private void tap(KeyCode code, String text) {
         press(code, text);
+        release(code);
+    }
+
+    private void release(KeyCode code) {
         Event.fireEvent(scene, keyEvent(KeyEvent.KEY_RELEASED, code, ""));
     }
 

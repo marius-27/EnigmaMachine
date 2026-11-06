@@ -230,3 +230,35 @@
 .scroll-pane > .viewport {
     -fx-background-color: -enigma-panel;
 }
+
+/* The header shared by both modes. */
+.shell-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -enigma-gold-bright;
+}
+
+.shell-mode {
+    -fx-padding: 2 8;
+    -fx-background-color: -enigma-panel;
+    -fx-background-radius: 4px;
+    -fx-border-color: -enigma-gold;
+    -fx-border-radius: 4px;
+}
+
+.shell-status {
+    -fx-text-fill: -enigma-gold-bright;
+}
+
+.mode-button {
+    -fx-font-weight: bold;
+}
+
+/* Rules for the Diagram mode stay under its root class, so they cannot change the Classic view. */
+.diagram-view .diagram-area {
+    -fx-padding: 8;
+}
+
+.diagram-view .diagram-components {
+    -fx-text-fill: -enigma-text;
+}

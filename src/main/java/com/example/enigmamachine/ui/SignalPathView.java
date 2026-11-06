@@ -60,7 +60,7 @@ public final class SignalPathView extends VBox {
     private final CheckBox educationalMode = new CheckBox("Educational mode");
     private final ObjectProperty<Double> speed = new SimpleObjectProperty<>(NORMAL_SPEED);
     private final Timeline timeline;
-    private boolean active = true;
+    private boolean active;
 
     public SignalPathView(ObservableValue<SignalTrace> lastTrace, Shortcuts shortcuts) {
         super(SPACING);
