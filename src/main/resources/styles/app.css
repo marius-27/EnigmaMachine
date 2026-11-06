@@ -349,3 +349,14 @@
     -fx-font-weight: bold;
     -fx-text-fill: -enigma-gold-bright;
 }
+
+/* The letters on the signal's path take the colour of its direction. */
+.diagram-view .diagram-contact:forward {
+    -fx-text-fill: -enigma-forward;
+    -fx-font-weight: bold;
+}
+
+.diagram-view .diagram-contact:return {
+    -fx-text-fill: -enigma-return;
+    -fx-font-weight: bold;
+}

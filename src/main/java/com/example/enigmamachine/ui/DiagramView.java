@@ -1,11 +1,15 @@
 package com.example.enigmamachine.ui;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -20,19 +24,28 @@ import javafx.scene.layout.VBox;
 public final class DiagramView extends MachineView {
 
     private final WiringDiagramView diagram;
+    private final StackPane content;
+    private final ScrollPane scroll;
 
     public DiagramView(MainController controller) {
         super(controller, "diagram-view");
         diagram = new WiringDiagramView(
                 controller.viewModel().wiringProperty(), controller.viewModel().litLampProperty());
+        // The group takes the diagram's scaled size, and the stack pane keeps it centred in the space left over.
+        content = new StackPane(new Group(diagram));
+        scroll = diagramScroll();
         SignalPathView signal = signalPathView();
-        signal.shownTraceProperty().addListener(
-                (observable, previous, trace) -> diagram.showSignal(trace, signal.activeStepProperty().get()));
-        signal.activeStepProperty().addListener(
-                (observable, previous, step) -> diagram.showSignal(signal.shownTraceProperty().get(), step.intValue()));
+        signal.shownTraceProperty().addListener((observable, previous, trace) -> {
+            diagram.showSignal(trace, signal.activeStepProperty().get());
+            followSignal();
+        });
+        signal.activeStepProperty().addListener((observable, previous, step) -> {
+            diagram.showSignal(signal.shownTraceProperty().get(), step.intValue());
+            followSignal();
+        });
 
-        VBox diagramArea = new VBox(ViewParts.SPACING / 2, diagramScroll(), replayFooter(signal));
-        VBox.setVgrow(diagramArea.getChildren().get(0), Priority.ALWAYS);
+        VBox diagramArea = new VBox(ViewParts.SPACING / 2, scroll, replayFooter(signal));
+        VBox.setVgrow(scroll, Priority.ALWAYS);
         TitledPane diagramSection = ViewParts.section("Diagram", diagramArea);
         TitledPane keyboard = ViewParts.section("Keyboard", keyboardView());
 
@@ -41,31 +54,54 @@ public final class DiagramView extends MachineView {
         setCenter(machine);
     }
 
-    private Node diagramScroll() {
-        // The group takes the diagram's scaled size, and the stack pane keeps it centred in the space left over.
-        StackPane content = new StackPane(new Group(diagram));
-        ScrollPane scroll = new ScrollPane(content);
-        scroll.getStyleClass().add("diagram-scroll");
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+    private ScrollPane diagramScroll() {
+        ScrollPane diagramScroll = new ScrollPane(content);
+        diagramScroll.getStyleClass().add("diagram-scroll");
+        diagramScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        diagramScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         // A focused scroll pane would scroll on Space while a message is being typed.
-        scroll.setFocusTraversable(false);
+        diagramScroll.setFocusTraversable(false);
         // A large window enlarges the diagram; a small one scrolls it rather than shrinking its letters.
-        scroll.viewportBoundsProperty().addListener((observable, previous, viewport) -> {
+        diagramScroll.viewportBoundsProperty().addListener((observable, previous, viewport) -> {
             double scale = WiringDiagramView.fitScale(
                     viewport.getWidth(), viewport.getHeight(), diagram.getPrefWidth(), diagram.getPrefHeight());
             diagram.setScaleX(scale);
             diagram.setScaleY(scale);
             content.setMinSize(viewport.getWidth(), viewport.getHeight());
         });
-        return scroll;
+        return diagramScroll;
     }
 
-    /** The step in words and the replay controls, which stay in view while the diagram scrolls. */
+    /**
+     * Keeps the step being shown in view when the window is too small for the whole diagram. The diagram only
+     * scrolls at its normal size, so its own coordinates are those of the scrolled content.
+     */
+    private void followSignal() {
+        Point2D point = diagram.currentPoint();
+        if (point == null || diagram.getScaleX() != 1) {
+            return;
+        }
+        double viewportWidth = scroll.getViewportBounds().getWidth();
+        double viewportHeight = scroll.getViewportBounds().getHeight();
+        scroll.setHvalue(WiringDiagramView.scrollToShow(
+                point.getX(), scroll.getHvalue(), viewportWidth, content.getWidth()));
+        scroll.setVvalue(WiringDiagramView.scrollToShow(
+                point.getY(), scroll.getVvalue(), viewportHeight, content.getHeight()));
+    }
+
+    /**
+     * The step in words and the replay controls, on one line while there is room for both. In a narrow window the
+     * controls move under the text rather than being squeezed until their labels no longer fit.
+     */
     private Node replayFooter(SignalPathView signal) {
-        VBox footer = new VBox(ViewParts.SPACING / 2, diagram.stepLabel(), signal.replayBar());
+        Region bar = (Region) signal.replayBar();
+        bar.setMinWidth(Region.USE_PREF_SIZE);
+        FlowPane footer = new FlowPane(ViewParts.SPACING, ViewParts.SPACING / 2, diagram.stepLabel(), bar);
         footer.getStyleClass().add("diagram-footer");
+        footer.setAlignment(Pos.CENTER_LEFT);
         footer.setPadding(new Insets(0, 4, 4, 4));
+        // A long step text wraps inside the footer instead of running past its edge.
+        diagram.stepLabel().maxWidthProperty().bind(footer.widthProperty().subtract(8));
         return footer;
     }
 }

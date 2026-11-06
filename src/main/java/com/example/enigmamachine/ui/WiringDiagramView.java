@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javafx.beans.value.ObservableValue;
 import javafx.css.PseudoClass;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.AccessibleRole;
 import javafx.scene.Group;
@@ -34,8 +35,8 @@ import javafx.scene.shape.Shape;
  */
 public final class WiringDiagramView extends Pane {
 
-    static final double ROW = 16;
-    static final double CONTACTS_TOP = 52;
+    static final double ROW = 14;
+    static final double CONTACTS_TOP = 40;
     static final PseudoClass FORWARD = PseudoClass.getPseudoClass("forward");
     static final PseudoClass RETURN = PseudoClass.getPseudoClass("return");
     static final PseudoClass CURRENT = PseudoClass.getPseudoClass("current");
@@ -45,7 +46,7 @@ public final class WiringDiagramView extends Pane {
     private static final double GAP = 18;
     private static final double CONTACT_WIDTH = 16;
     private static final double INSET = 4;
-    private static final double ARROW = 5;
+    private static final double ARROW = 7;
     private static final double REFLECTOR_WIDTH = 90;
     private static final double ROTOR_WIDTH = 112;
     private static final double KEYS_WIDTH = 56;
@@ -159,6 +160,32 @@ public final class WiringDiagramView extends Pane {
             }
         }
         return null;
+    }
+
+    /** Where the signal is in the step being shown, in the diagram's own coordinates, or null when nothing is. */
+    Point2D currentPoint() {
+        for (Component component : components()) {
+            List<Double> points = component.arrow.getPoints();
+            if (component.arrow.isVisible() && !points.isEmpty()) {
+                return new Point2D(component.getLayoutX() + points.get(2), component.getLayoutY() + points.get(3));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The scroll value that brings a point into view, or the current value when the point is already visible.
+     * Positions are in the scrolled content; 0 is the start and 1 the end of the scroll range.
+     */
+    static double scrollToShow(double point, double current, double viewport, double content) {
+        if (content <= viewport) {
+            return current;
+        }
+        double start = current * (content - viewport);
+        if (point >= start && point <= start + viewport) {
+            return current;
+        }
+        return Math.clamp((point - viewport / 2) / (content - viewport), 0.0, 1.0);
     }
 
     private static boolean isLit(Shape shape) {
@@ -332,6 +359,8 @@ public final class WiringDiagramView extends Pane {
         private final Label heading = new Label();
         private final Group wires = new Group();
         private final List<Label> contacts = new ArrayList<>();
+        private final List<Label> leftContacts = new ArrayList<>();
+        private final List<Label> rightContacts = new ArrayList<>();
         // Each contact's wire: for a rotor or the plugboard the wire from that contact on the right, for the
         // reflector the loop that contact belongs to.
         private final List<Shape> wireByContact = new ArrayList<>();
@@ -358,10 +387,10 @@ public final class WiringDiagramView extends Pane {
             getChildren().addAll(panel, heading, wires, arrow);
             wires.setMouseTransparent(true);
             if (leftContacts) {
-                addContacts(leftContactX());
+                addContacts(leftContactX(), this.leftContacts);
             }
             if (rightContacts) {
-                addContacts(rightContactX());
+                addContacts(rightContactX(), this.rightContacts);
             }
         }
 
@@ -410,7 +439,11 @@ public final class WiringDiagramView extends Pane {
 
         void clearSignal() {
             wires.getChildren().forEach(wire -> setLit((Shape) wire, null, false));
-            contacts.forEach(contact -> contact.pseudoClassStateChanged(ENTERED, false));
+            contacts.forEach(contact -> {
+                contact.pseudoClassStateChanged(ENTERED, false);
+                contact.pseudoClassStateChanged(FORWARD, false);
+                contact.pseudoClassStateChanged(RETURN, false);
+            });
             arrow.setVisible(false);
             arrow.getPoints().clear();
         }
@@ -425,6 +458,12 @@ public final class WiringDiagramView extends Pane {
             }
             Shape wire = wireByContact.get(returning ? output : input);
             setLit(wire, direction, current);
+            // The letters the signal entered and left by take the colour of its direction.
+            boolean loop = wire instanceof CubicCurve;
+            List<Label> entrySide = loop || !returning ? rightContacts : leftContacts;
+            List<Label> exitSide = loop || returning ? rightContacts : leftContacts;
+            entrySide.get(input).pseudoClassStateChanged(direction, true);
+            exitSide.get(output).pseudoClassStateChanged(direction, true);
             if (current) {
                 // The arrow sits where the signal leaves: on the left on the way in, on the right on the way back
                 // and after the reflector has turned it around.
@@ -456,7 +495,7 @@ public final class WiringDiagramView extends Pane {
             return componentWidth - INSET - CONTACT_WIDTH;
         }
 
-        private void addContacts(double x) {
+        private void addContacts(double x, List<Label> side) {
             for (int contact = 0; contact < Alphabet.SIZE; contact++) {
                 Label letter = new Label(String.valueOf(Alphabet.toLetter(contact)));
                 letter.getStyleClass().add("diagram-contact");
@@ -467,6 +506,7 @@ public final class WiringDiagramView extends Pane {
                 letter.relocate(x, CONTACTS_TOP + contact * ROW);
                 getChildren().add(letter);
                 contacts.add(letter);
+                side.add(letter);
             }
         }
     }

@@ -140,6 +140,55 @@ class DiagramSignalTest {
     }
 
     @Test
+    void lettersOnThePathTakeTheColourOfTheirDirection() {
+        onFxThread(() -> {
+            educationalMode().setSelected(true);
+            controller.pressKey('E');
+
+            // The plugboard step enters on its right and leaves on its left.
+            assertEquals(2, pathContacts(".diagram-plugboard", WiringDiagramView.FORWARD));
+            for (int step = 0; step < 4; step++) {
+                replayStep().fire();
+            }
+            // The reflector takes the signal in and sends it back on the same side.
+            assertEquals(2, pathContacts(".diagram-reflector", WiringDiagramView.FORWARD));
+            for (int step = 0; step < 4; step++) {
+                replayStep().fire();
+            }
+            // Way in and way back both crossed the plugboard.
+            assertEquals(2, pathContacts(".diagram-plugboard", WiringDiagramView.FORWARD));
+            assertEquals(2, pathContacts(".diagram-plugboard", WiringDiagramView.RETURN));
+
+            controller.clear();
+            assertEquals(0, pathContacts(".diagram-plugboard", WiringDiagramView.FORWARD));
+        });
+    }
+
+    @Test
+    void stepTextIsReadByScreenReaders() {
+        onFxThread(() -> {
+            educationalMode().setSelected(true);
+            controller.pressKey('E');
+            replayStep().fire();
+
+            assertEquals(stepText(), diagram().stepLabel().getAccessibleText());
+        });
+    }
+
+    @Test
+    void scrollingBringsTheSignalIntoViewOnlyWhenItIsOutOfView() {
+        // Everything fits: nothing moves.
+        assertEquals(0.3, WiringDiagramView.scrollToShow(400, 0.3, 500, 400));
+        // Already visible between 100 and 300 of 500: nothing moves.
+        assertEquals(0.5, WiringDiagramView.scrollToShow(250, 0.5, 200, 400));
+        // Below the view: centred on it.
+        assertEquals(0.75, WiringDiagramView.scrollToShow(250, 0.0, 200, 400));
+        // Near the ends the view stops at the edge of the content.
+        assertEquals(1.0, WiringDiagramView.scrollToShow(399, 0.0, 100, 400));
+        assertEquals(0.0, WiringDiagramView.scrollToShow(1, 1.0, 100, 400));
+    }
+
+    @Test
     void reflectorStepSaysTheSignalTurnsBack() {
         onFxThread(() -> {
             educationalMode().setSelected(true);
@@ -273,6 +322,13 @@ class DiagramSignalTest {
             assertNotNull(diagram().currentArrow());
             assertEquals('E', trace().input());
         });
+    }
+
+    private long pathContacts(String component, javafx.css.PseudoClass direction) {
+        diagram();
+        return view.lookup(component).lookupAll(".diagram-contact").stream()
+                .filter(contact -> contact.getPseudoClassStates().contains(direction))
+                .count();
     }
 
     private static boolean pointsRight(Stage stage) {

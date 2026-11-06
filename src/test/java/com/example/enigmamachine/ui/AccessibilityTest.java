@@ -32,7 +32,10 @@ class AccessibilityTest {
                 List.of("-enigma-lamp-off", "-enigma-window"),
                 List.of("-enigma-background", "-enigma-gold"),
                 List.of("-enigma-background", "-enigma-gold-bright"),
-                List.of("-enigma-text", "-enigma-window"));
+                List.of("-enigma-text", "-enigma-window"),
+                // Contact letters on the signal's path.
+                List.of("-enigma-forward", "-enigma-window"),
+                List.of("-enigma-return", "-enigma-window"));
 
         for (List<String> pair : pairs) {
             double ratio = contrast(colors.get(pair.get(0)), colors.get(pair.get(1)));
